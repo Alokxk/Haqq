@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.pdf
+corpus/sources/
+.pytest_cache/
+dist/
+node_modules/
+frontend/dist/
