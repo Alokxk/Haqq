@@ -7,6 +7,7 @@ from config.settings import settings
 from db.postgres import init_db
 from db.redis import ping_redis
 from handlers.debug import router as debug_router
+from handlers.examples import router as examples_router
 
 
 @asynccontextmanager
@@ -31,6 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(debug_router)
+app.include_router(examples_router)
 
 
 @app.get("/health")
