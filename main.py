@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config.settings import settings
 from db.postgres import init_db
 from db.redis import ping_redis
+from handlers.debug import router as debug_router
 
 
 @asynccontextmanager
@@ -28,6 +29,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(debug_router)
 
 
 @app.get("/health")
