@@ -9,6 +9,7 @@ from db.redis import ping_redis
 from handlers.debug import router as debug_router
 from handlers.examples import router as examples_router
 from handlers.draft import router as draft_router
+from handlers.analyze import router as analyze_router
 
 
 @asynccontextmanager
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(debug_router)
 app.include_router(examples_router)
 app.include_router(draft_router)
+app.include_router(analyze_router)
 
 
 @app.get("/health")
