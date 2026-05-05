@@ -8,7 +8,7 @@ from slowapi.util import get_remote_address
 
 from config.settings import settings
 from db.postgres import init_db
-from db.redis import ping_redis
+from db.redis import ping_redis, redis_conn
 from handlers.analyze import router as analyze_router
 from handlers.debug import router as debug_router
 from handlers.draft import router as draft_router
@@ -60,11 +60,36 @@ async def health():
 @app.get("/health/detailed")
 async def health_detailed():
     redis_ok = ping_redis()
+
+    # Real corpus chunk count
+    corpus_chunks = 0
+    last_ingest = None
+    try:
+        import psycopg2
+
+        conn = psycopg2.connect("postgresql://postgres:postgres@localhost/haqq")
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM legal_corpus")
+        corpus_chunks = cursor.fetchone()[0]
+        cursor.execute("SELECT MAX(last_updated) FROM legal_corpus")
+        last_ingest = cursor.fetchone()[0]
+        last_ingest = last_ingest.isoformat() if last_ingest else None
+        conn.close()
+    except Exception:
+        pass
+
+    # Real Redis queue depth
+    redis_queue_depth = 0
+    try:
+        redis_queue_depth = redis_conn.llen("rq:queue:haqq")
+    except Exception:
+        pass
+
     return {
         "status": "ok",
         "db": "ok",
         "redis": "ok" if redis_ok else "unavailable",
-        "corpus_chunks": 0,
-        "last_ingest": None,
-        "redis_queue_depth": 0,
+        "corpus_chunks": corpus_chunks,
+        "last_ingest": last_ingest,
+        "redis_queue_depth": redis_queue_depth,
     }
