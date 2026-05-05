@@ -1,17 +1,18 @@
-import uuid
 import pathlib
-from datetime import datetime
+import uuid
 
 import psycopg2
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from rq.job import Job
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-from db.redis import redis_conn, queue
+from db.redis import queue
 from pipeline.notice_generator import NOTICE_GENERATORS
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 PDF_DIR = pathlib.Path("generated_notices")
@@ -126,8 +127,9 @@ def _build_notice_content(
 
 
 @router.post("/draft")
-async def create_draft(request: DraftRequest):
-    if request.notice_type not in NOTICE_GENERATORS:
+@limiter.limit("5/hour")
+async def create_draft(request: Request, body: DraftRequest):
+    if body.notice_type not in NOTICE_GENERATORS:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid notice type. Choose from: {list(NOTICE_GENERATORS.keys())}",
@@ -135,23 +137,23 @@ async def create_draft(request: DraftRequest):
 
     notice_id = str(uuid.uuid4())
     content = _build_notice_content(
-        request.notice_type,
-        request.sender.model_dump(),
-        request.recipient.model_dump(),
-        request.extra,
+        body.notice_type,
+        body.sender.model_dump(),
+        body.recipient.model_dump(),
+        body.extra,
     )
 
     conn = psycopg2.connect(DATABASE_URL)
     try:
         cursor = conn.cursor()
 
-        if request.situation_id:
+        if body.situation_id:
             cursor.execute(
                 """
                 INSERT INTO notices (id, situation_id, notice_type, content)
                 VALUES (%s, %s, %s, %s)
                 """,
-                (notice_id, request.situation_id, request.notice_type, content),
+                (notice_id, body.situation_id, body.notice_type, content),
             )
         else:
             cursor.execute(
@@ -159,7 +161,7 @@ async def create_draft(request: DraftRequest):
                 INSERT INTO notices (id, notice_type, content)
                 VALUES (%s, %s, %s)
                 """,
-                (notice_id, request.notice_type, content),
+                (notice_id, body.notice_type, content),
             )
 
         cursor.execute(
@@ -177,10 +179,10 @@ async def create_draft(request: DraftRequest):
     job = queue.enqueue(
         generate_pdf_job,
         notice_id,
-        request.notice_type,
-        request.sender.model_dump(),
-        request.recipient.model_dump(),
-        request.extra,
+        body.notice_type,
+        body.sender.model_dump(),
+        body.recipient.model_dump(),
+        body.extra,
         job_timeout=60,
     )
 
