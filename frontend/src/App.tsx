@@ -1,9 +1,17 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Result from "./pages/Result";
+
 function App() {
   return (
-    <div className="min-h-screen bg-white">
-      <p className="text-center text-primary pt-10">Haqq loading...</p>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/result" element={<Result />} />
+        <Route path="/s/:id" element={<Result />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
