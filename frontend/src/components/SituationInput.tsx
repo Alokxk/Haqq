@@ -1,10 +1,11 @@
-import { useState } from "react";
 import type { Language } from "../App";
 
 interface SituationInputProps {
   language: Language;
   onSubmit: (text: string) => void;
   loading: boolean;
+  value: string;
+  onChange: (text: string) => void;
 }
 
 const PLACEHOLDER = {
@@ -21,12 +22,12 @@ export default function SituationInput({
   language,
   onSubmit,
   loading,
+  value,
+  onChange,
 }: SituationInputProps) {
-  const [text, setText] = useState("");
-
   const handleSubmit = () => {
-    if (text.trim().length < 10) return;
-    onSubmit(text.trim());
+    if (value.trim().length < 10) return;
+    onSubmit(value.trim());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -36,8 +37,8 @@ export default function SituationInput({
   return (
     <div className="w-full">
       <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={PLACEHOLDER[language]}
         rows={4}
@@ -46,7 +47,7 @@ export default function SituationInput({
       />
       <button
         onClick={handleSubmit}
-        disabled={loading || text.trim().length < 10}
+        disabled={loading || value.trim().length < 10}
         className="mt-3 w-full bg-primary text-white font-semibold py-3 px-6 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading

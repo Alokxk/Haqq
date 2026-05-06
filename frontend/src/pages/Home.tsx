@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Language } from "../App";
 import SituationInput from "../components/SituationInput";
+import ExampleSituations from "../components/ExampleSituations";
 import { analyzeText } from "../api";
 
 interface HomeProps {
@@ -22,6 +23,7 @@ const HERO = {
 export default function Home({ language }: HomeProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inputText, setInputText] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = async (text: string) => {
@@ -54,6 +56,15 @@ export default function Home({ language }: HomeProps) {
         language={language}
         onSubmit={handleSubmit}
         loading={loading}
+        value={inputText}
+        onChange={setInputText}
+      />
+
+      <ExampleSituations
+        language={language}
+        onSelect={(text) => {
+          setInputText(text);
+        }}
       />
 
       {error && (
