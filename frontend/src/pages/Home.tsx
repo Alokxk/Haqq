@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import type { Language } from "../App";
 import SituationInput from "../components/SituationInput";
 import ExampleSituations from "../components/ExampleSituations";
+import FAQ from "../components/FAQ";
+import Footer from "../components/Footer";
 import { analyzeText } from "../api";
 
 interface HomeProps {
@@ -44,40 +46,43 @@ export default function Home({ language }: HomeProps) {
   };
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-12">
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-gray-900 mb-3">
-          {HERO[language].title}
-        </h1>
-        <p className="text-lg text-gray-500">{HERO[language].subtitle}</p>
-      </div>
+    <>
+      <main className="max-w-3xl mx-auto px-4 py-12">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+            {HERO[language].title}
+          </h1>
+          <p className="text-lg text-gray-500">{HERO[language].subtitle}</p>
+        </div>
 
-      <SituationInput
-        language={language}
-        onSubmit={handleSubmit}
-        loading={loading}
-        value={inputText}
-        onChange={setInputText}
-      />
+        <SituationInput
+          language={language}
+          onSubmit={handleSubmit}
+          loading={loading}
+          value={inputText}
+          onChange={setInputText}
+        />
 
-      <ExampleSituations
-        language={language}
-        onSelect={(text) => {
-          setInputText(text);
-        }}
-      />
+        <ExampleSituations
+          language={language}
+          onSelect={(text) => setInputText(text)}
+        />
 
-      {error && (
-        <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
-      )}
+        {error && (
+          <p className="mt-4 text-sm text-red-600 text-center">{error}</p>
+        )}
 
-      <div className="mt-6 text-center text-xs text-gray-400">
-        <p>
-          {language === "en"
-            ? "Press Ctrl+Enter to submit"
-            : "सबमिट करने के लिए Ctrl+Enter दबाएं"}
-        </p>
-      </div>
-    </main>
+        <div className="mt-4 text-center text-xs text-gray-400">
+          <p>
+            {language === "en"
+              ? "Press Ctrl+Enter to submit"
+              : "सबमिट करने के लिए Ctrl+Enter दबाएं"}
+          </p>
+        </div>
+
+        <FAQ language={language} />
+      </main>
+      <Footer language={language} />
+    </>
   );
 }
