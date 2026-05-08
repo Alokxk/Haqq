@@ -5,6 +5,8 @@ import ConfidenceBadge from "../components/ConfidenceBadge";
 import LawCitation from "../components/LawCitation";
 import FallbackResult from "../components/FallbackResult";
 import Footer from "../components/Footer";
+import EvidenceChecklist from "../components/EvidenceChecklist";
+import ShareButton from "../components/ShareButton";
 
 interface ResultProps {
   language: Language;
@@ -46,12 +48,15 @@ export default function Result({ language }: ResultProps) {
   return (
     <>
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <button
-          onClick={() => navigate("/")}
-          className="text-sm text-gray-500 hover:text-primary mb-6 flex items-center gap-1"
-        >
-          ← {language === "en" ? "Back" : "वापस"}
-        </button>
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={() => navigate("/")}
+            className="text-sm text-gray-500 hover:text-primary flex items-center gap-1"
+          >
+            ← {language === "en" ? "Back" : "वापस"}
+          </button>
+          <ShareButton url={result.share_url} language={language} />
+        </div>
 
         <ConfidenceBadge
           confidence={result.confidence}
@@ -114,6 +119,11 @@ export default function Result({ language }: ResultProps) {
             ))}
           </section>
         )}
+
+        <EvidenceChecklist
+          items={result.evidence_checklist}
+          language={language}
+        />
 
         <p className="mt-8 text-xs text-gray-400 border-t border-gray-100 pt-4">
           {result.disclaimer}
