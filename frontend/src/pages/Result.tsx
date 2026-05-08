@@ -7,6 +7,7 @@ import FallbackResult from "../components/FallbackResult";
 import Footer from "../components/Footer";
 import EvidenceChecklist from "../components/EvidenceChecklist";
 import ShareButton from "../components/ShareButton";
+import NoticeForm from "../components/NoticeForm";
 
 interface ResultProps {
   language: Language;
@@ -124,6 +125,8 @@ export default function Result({ language }: ResultProps) {
           items={result.evidence_checklist}
           language={language}
         />
+
+        <NoticeForm situationId={result.situation_id} language={language} />
 
         <p className="mt-8 text-xs text-gray-400 border-t border-gray-100 pt-4">
           {result.disclaimer}
