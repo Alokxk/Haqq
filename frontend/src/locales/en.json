@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "toggle_language": "हिंदी"
+  },
+  "home": {
+    "title": "Know your legal rights.",
+    "subtitle": "Free. Instant. In plain Hindi or English.",
+    "placeholder": "Describe your situation... e.g. My landlord hasn't returned my security deposit even after 3 months of vacating.",
+    "submit": "→ Know My Rights",
+    "submitting": "Finding your rights...",
+    "hint": "Press Ctrl+Enter to submit",
+    "error": "Something went wrong. Please try again.",
+    "examples_label": "Or try an example:"
+  },
+  "result": {
+    "back": "Back",
+    "share": "Share →",
+    "share_copied": "✓ Copied",
+    "rights": "Your Rights",
+    "remedies": "What You Can Do",
+    "laws": "The Law Says",
+    "evidence": "Evidence to Preserve",
+    "notice": "Draft Your Legal Notice",
+    "notice_btn": "Generate Notice PDF",
+    "generating": "Generating PDF...",
+    "download": "Download PDF",
+    "fallback_title": "Your situation may involve laws not yet in our database.",
+    "fallback_steps": "What you can do right now:"
+  },
+  "confidence": {
+    "high": "High coverage",
+    "medium": "Medium coverage",
+    "low": "Low coverage"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions"
+  },
+  "footer": {
+    "line1": "Haqq — Built for India. Open source.",
+    "line2": "Legal text from indiacode.nic.in (Government of India). Public domain."
+  }
+}
