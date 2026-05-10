@@ -66,3 +66,11 @@ CREATE TABLE pdf_jobs (
     created_at   TIMESTAMPTZ DEFAULT NOW(),
     completed_at TIMESTAMPTZ
 );
+
+CREATE TABLE feedback (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    situation_id UUID REFERENCES situations(id),
+    rating SMALLINT NOT NULL CHECK (rating IN (1, -1)),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_feedback_situation ON feedback(situation_id);

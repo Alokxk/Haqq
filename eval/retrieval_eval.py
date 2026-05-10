@@ -1,9 +1,5 @@
-import time
 import psycopg2
-import google.generativeai as genai
 from pgvector.psycopg2 import register_vector
-
-from config.settings import settings
 
 DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 
@@ -303,14 +299,14 @@ def semantic_search(
     top_k: int = 8,
 ) -> list[dict]:
     filters = ["embedding IS NOT NULL"]
-    params = []
+    filter_params = []
 
     if domain:
         filters.append("domain = %s")
-        params.append(domain)
+        filter_params.append(domain)
     if state:
         filters.append("(state = %s OR state IS NULL)")
-        params.append(state)
+        filter_params.append(state)
 
     where = " AND ".join(filters)
 
@@ -325,7 +321,7 @@ def semantic_search(
         LIMIT %s
     """
 
-    cursor.execute(query, params + [query_vector, query_vector, top_k])
+    cursor.execute(query, [query_vector] + filter_params + [query_vector, top_k])
     rows = cursor.fetchall()
     return [
         {
@@ -411,32 +407,34 @@ def print_results(results: dict, label: str):
 
 
 def main():
-    genai.configure(api_key=settings.gemini_api_key)
+    import warnings
+
+    warnings.filterwarnings("ignore")
+    from fastembed import TextEmbedding
 
     conn = psycopg2.connect(DATABASE_URL)
     register_vector(conn)
     cursor = conn.cursor()
 
-    print("Embedding eval queries via Gemini...")
+    print("Loading embedding model...")
+    model = TextEmbedding("intfloat/multilingual-e5-large")
+    print("Model loaded.")
+
+    print("Embedding eval queries...")
     query_vectors = {}
     for i, case in enumerate(TEST_CASES):
         if not case["expected_sections"]:
             continue
-        result = genai.embed_content(
-            model="models/gemini-embedding-001",
-            content=case["situation"],
-            task_type="retrieval_query",
-            output_dimensionality=768,
-        )
-        query_vectors[case["id"]] = result["embedding"]
-        if (i + 1) % 5 == 0:
+        query_text = f"query: {case['situation']}"
+        vectors = list(model.embed([query_text]))
+        query_vectors[case["id"]] = vectors[0].tolist()
+        if (i + 1) % 10 == 0:
             print(f"  Embedded {i + 1}/{len(TEST_CASES)} queries")
-        time.sleep(1)
 
     print("\nRunning semantic search baseline...")
     results = run_eval(cursor, query_vectors)
     print_results(results, "SEMANTIC SEARCH BASELINE")
-    print("\nRecord this number before Commit 8.")
+    print("\nRecord these numbers in the README.")
 
     conn.close()
 

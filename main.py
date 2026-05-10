@@ -13,6 +13,7 @@ from handlers.analyze import router as analyze_router
 from handlers.debug import router as debug_router
 from handlers.draft import router as draft_router
 from handlers.examples import router as examples_router
+from handlers.feedback import router as feedback_router
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -45,6 +46,7 @@ app.include_router(analyze_router)
 app.include_router(examples_router)
 app.include_router(debug_router)
 app.include_router(draft_router)
+app.include_router(feedback_router)
 
 
 @app.get("/health")
