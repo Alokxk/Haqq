@@ -1,12 +1,16 @@
 import json
 import re
-import google.generativeai as genai
+from openai import OpenAI
 from pydantic import BaseModel
 
 from config.settings import settings
 
-genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel("models/gemini-2.0-flash")
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=settings.openrouter_api_key,
+)
+
+MODEL = "google/gemma-4-31b-it:free"
 
 DISCLAIMER = (
     "This is not legal advice. For court proceedings or complex matters, "
@@ -24,22 +28,22 @@ FALLBACK_MESSAGE = (
 )
 
 CHEQUE_BOUNCE_CONSTRAINT = """
-IMPORTANT: Cheque bounce under Section 138 NI Act has strict time-sensitive 
+IMPORTANT: Cheque bounce under Section 138 NI Act has strict time-sensitive
 requirements that are absolute:
 1. Demand notice must be sent within 30 days of receiving the bank's dishonour memo.
 2. Criminal complaint must be filed within 30 days of the demand notice deadline expiring.
 If either deadline is missed, the case fails entirely.
-If the user's described timeline suggests these deadlines may have already passed, 
+If the user's described timeline suggests these deadlines may have already passed,
 state this explicitly and prominently.
 """
 
-ANALYZER_PROMPT = """You are a legal rights assistant for India. Analyze the situation 
-below using ONLY the retrieved law sections provided. Do not cite any law not present 
+ANALYZER_PROMPT = """You are a legal rights assistant for India. Analyze the situation
+below using ONLY the retrieved law sections provided. Do not cite any law not present
 in the context below.
 
-Use hedged language throughout: say "Based on the retrieved sections, you may consider..." 
+Use hedged language throughout: say "Based on the retrieved sections, you may consider..."
 rather than definitive statements like "You can do X."
-If a right or remedy is not explicitly supported by the retrieved text below, 
+If a right or remedy is not explicitly supported by the retrieved text below,
 do not include it.
 
 {cheque_bounce_constraint}
@@ -103,7 +107,6 @@ def analyze(
     language: str = "en",
 ) -> AnalysisResult:
     cheque_constraint = CHEQUE_BOUNCE_CONSTRAINT if domain == "cheque_bounce" else ""
-
     context = build_context(chunks)
 
     prompt = ANALYZER_PROMPT.format(
@@ -112,9 +115,13 @@ def analyze(
         cheque_bounce_constraint=cheque_constraint,
     )
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+    )
 
+    raw = response.choices[0].message.content.strip()
     raw = re.sub(r"^```json\s*", "", raw)
     raw = re.sub(r"^```\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)

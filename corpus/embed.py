@@ -1,13 +1,14 @@
 import time
 import psycopg2
-import google.generativeai as genai
+import warnings
 from pgvector.psycopg2 import register_vector
+from fastembed import TextEmbedding
 
-from config.settings import settings
+warnings.filterwarnings("ignore")
 
 DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
-BATCH_SIZE = 5
-SLEEP_BETWEEN_BATCHES = 1.0
+BATCH_SIZE = 10
+MODEL_NAME = "BAAI/bge-m3"
 
 
 def get_chunks_without_embeddings(cursor) -> list[tuple]:
@@ -17,29 +18,10 @@ def get_chunks_without_embeddings(cursor) -> list[tuple]:
     return cursor.fetchall()
 
 
-def embed_batch(texts: list[str]) -> list[list[float]]:
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            result = genai.embed_content(
-                model="models/gemini-embedding-001",
-                content=texts,
-                task_type="retrieval_document",
-                output_dimensionality=768,
-            )
-            return result["embedding"]
-        except Exception as e:
-            if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                wait = 60 * (attempt + 1)
-                print(f"Rate limited. Waiting {wait}s before retry...")
-                time.sleep(wait)
-            else:
-                raise
-    raise RuntimeError("Max retries exceeded")
-
-
 def main():
-    genai.configure(api_key=settings.gemini_api_key)
+    print(f"Loading {MODEL_NAME} (first run downloads ~2.2GB)...")
+    model = TextEmbedding(MODEL_NAME)
+    print("Model loaded.")
 
     conn = psycopg2.connect(DATABASE_URL)
     register_vector(conn)
@@ -54,26 +36,25 @@ def main():
         for i in range(0, total, BATCH_SIZE):
             batch = chunks[i : i + BATCH_SIZE]
             ids = [row[0] for row in batch]
-            texts = [row[1] for row in batch]
+            texts = [f"passage: {row[1]}" for row in batch]
 
-            vectors = embed_batch(texts)
+            vectors = list(model.embed(texts))
 
             for chunk_id, vector in zip(ids, vectors):
                 cursor.execute(
                     "UPDATE legal_corpus SET embedding = %s WHERE id = %s",
-                    (vector, chunk_id),
+                    (vector.tolist(), chunk_id),
                 )
 
             conn.commit()
             embedded += len(batch)
 
-            if embedded % 50 == 0 or embedded == total:
+            if embedded % 100 == 0 or embedded == total:
                 print(f"Progress: {embedded}/{total}")
 
-            time.sleep(SLEEP_BETWEEN_BATCHES)
+            time.sleep(0.1)
 
         print(f"\nDone. {embedded} embeddings stored.")
-
     finally:
         conn.close()
 

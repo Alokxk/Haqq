@@ -8,7 +8,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    gemini_api_key: str
+    openrouter_api_key: str
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost/haqq"
     redis_url: str = "redis://localhost:6379/0"
     port: int = 8000

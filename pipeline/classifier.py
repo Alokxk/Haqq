@@ -1,12 +1,17 @@
 import json
+import os
 import re
-import google.generativeai as genai
+from openai import OpenAI
 from pydantic import BaseModel
 
 from config.settings import settings
 
-genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel("models/gemini-2.0-flash")
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=settings.openrouter_api_key,
+)
+
+MODEL = "google/gemma-4-31b-it:free"
 
 DOMAINS = [
     "labour",
@@ -49,9 +54,13 @@ def classify(text: str, language: str = "en") -> ClassificationResult:
         situation=text,
     )
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+    )
 
+    raw = response.choices[0].message.content.strip()
     raw = re.sub(r"^```json\s*", "", raw)
     raw = re.sub(r"^```\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)

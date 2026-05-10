@@ -1,8 +1,9 @@
+import warnings
 import psycopg2
 from pgvector.psycopg2 import register_vector
-import google.generativeai as genai
+from fastembed import TextEmbedding
 
-from config.settings import settings
+warnings.filterwarnings("ignore")
 
 DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 
@@ -14,16 +15,23 @@ CONFIDENCE_HIGH = 0.80
 CONFIDENCE_MEDIUM = 0.65
 CONFIDENCE_LOW = 0.50
 
+MODEL_NAME = "BAAI/bge-m3"
+
+_embedder = None
+
+
+def get_embedder() -> TextEmbedding:
+    global _embedder
+    if _embedder is None:
+        _embedder = TextEmbedding(MODEL_NAME)
+    return _embedder
+
 
 def get_query_embedding(text: str) -> list[float]:
-    genai.configure(api_key=settings.gemini_api_key)
-    result = genai.embed_content(
-        model="models/gemini-embedding-001",
-        content=text,
-        task_type="retrieval_query",
-        output_dimensionality=768,
-    )
-    return result["embedding"]
+    model = get_embedder()
+    query_text = f"query: {text}"
+    vectors = list(model.embed([query_text]))
+    return vectors[0].tolist()
 
 
 def hybrid_search(

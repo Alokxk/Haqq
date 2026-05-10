@@ -40,7 +40,7 @@ CREATE TABLE legal_corpus (
     indiacode_url    TEXT,
     last_updated     DATE,
     possibly_amended BOOLEAN DEFAULT FALSE,
-    embedding        vector(768),
+    embedding        vector(1024),
     tsv              TSVECTOR GENERATED ALWAYS AS (
                        to_tsvector('english',
                          coalesce(act_name, '') || ' ' ||
