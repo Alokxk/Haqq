@@ -87,12 +87,12 @@ def _save_situation(
 
 @router.post("/analyze")
 @limiter.limit("10/hour")
-async def analyze_situation(request: AnalyzeRequest, http_request: Request):
+async def analyze_situation(request: Request, body: AnalyzeRequest):
     start_time = time.time()
     session_id = str(uuid.uuid4())
     request_id = str(uuid.uuid4())[:8]
 
-    cache_key = _cache_key(request.text, request.language, request.state)
+    cache_key = _cache_key(body.text, body.language, body.state)
     cached = redis_conn.get(cache_key)
     if cached:
         response = json.loads(cached)
@@ -108,12 +108,12 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
         )
         return response
 
-    classification = classify(request.text, request.language)
+    classification = classify(body.text, body.language)
 
     retrieval = retrieve(
-        query_text=request.text,
+        query_text=body.text,
         domain=classification.domain if classification.confidence != "low" else None,
-        state=request.state
+        state=body.state
         or (classification.state if classification.confidence != "low" else None),
         classification_confidence=classification.confidence,
     )
@@ -127,11 +127,11 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
         response = fallback_response()
         response["situation_id"] = _save_situation(
             session_id=session_id,
-            raw_input=request.text,
-            language=request.language,
+            raw_input=body.text,
+            language=body.language,
             domain=classification.domain,
             sub_domain=classification.sub_domain,
-            state=request.state,
+            state=body.state,
             analysis={},
             laws_cited=[],
             confidence="low",
@@ -154,10 +154,10 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
         return response
 
     analysis_result = analyze(
-        situation=request.text,
+        situation=body.text,
         chunks=chunks,
         domain=classification.domain,
-        language=request.language,
+        language=body.language,
     )
 
     laws_cited = [
@@ -166,11 +166,11 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
 
     situation_id = _save_situation(
         session_id=session_id,
-        raw_input=request.text,
-        language=request.language,
+        raw_input=body.text,
+        language=body.language,
         domain=classification.domain,
         sub_domain=classification.sub_domain,
-        state=request.state,
+        state=body.state,
         analysis=analysis_result.model_dump(),
         laws_cited=laws_cited,
         confidence=confidence,
@@ -183,7 +183,7 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
         "share_url": f"https://haqq.in/s/{situation_id}",
         "domain": classification.domain,
         "sub_domain": classification.sub_domain,
-        "state": request.state or classification.state,
+        "state": body.state or classification.state,
         "confidence": confidence,
         "top_score": round(top_score, 4),
         "confidence_reason": analysis_result.confidence_reason,
@@ -203,7 +203,7 @@ async def analyze_situation(request: AnalyzeRequest, http_request: Request):
             {
                 "request_id": request_id,
                 "domain": classification.domain,
-                "state": request.state,
+                "state": body.state,
                 "confidence": confidence,
                 "top_score": top_score,
                 "fallback": False,

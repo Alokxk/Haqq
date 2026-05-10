@@ -15,7 +15,7 @@ CONFIDENCE_HIGH = 0.80
 CONFIDENCE_MEDIUM = 0.65
 CONFIDENCE_LOW = 0.50
 
-MODEL_NAME = "BAAI/bge-m3"
+MODEL_NAME = "intfloat/multilingual-e5-large"
 
 _embedder = None
 

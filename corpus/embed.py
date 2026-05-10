@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore")
 
 DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 BATCH_SIZE = 10
-MODEL_NAME = "BAAI/bge-m3"
+MODEL_NAME = "intfloat/multilingual-e5-large"
 
 
 def get_chunks_without_embeddings(cursor) -> list[tuple]:

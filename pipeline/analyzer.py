@@ -10,7 +10,7 @@ client = OpenAI(
     api_key=settings.openrouter_api_key,
 )
 
-MODEL = "google/gemma-4-31b-it:free"
+MODEL = settings.openrouter_model
 
 DISCLAIMER = (
     "This is not legal advice. For court proceedings or complex matters, "
