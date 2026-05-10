@@ -128,6 +128,25 @@ def analyze(
     raw = raw.strip()
 
     data = json.loads(raw)
+
+    chunk_map = {f"{c['act_short']}_{c['section_number']}": c for c in chunks}
+
+    act_url_map = {
+        c["act_short"]: c.get("indiacode_url") for c in chunks if c.get("indiacode_url")
+    }
+
+    for law in data.get("laws", []):
+        key = f"{law.get('act_short')}_{law.get('section')}"
+        if key in chunk_map:
+            chunk = chunk_map[key]
+            law["indiacode_url"] = chunk.get("indiacode_url") or law.get(
+                "indiacode_url"
+            )
+            law["last_updated"] = chunk.get("last_updated") or law.get("last_updated")
+            law["possibly_amended"] = chunk.get("possibly_amended", False)
+        elif law.get("act_short") in act_url_map:
+            law["indiacode_url"] = act_url_map[law["act_short"]]
+
     return AnalysisResult(**data)
 
 
