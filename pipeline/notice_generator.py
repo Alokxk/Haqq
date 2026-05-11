@@ -108,22 +108,6 @@ def _base_styles():
 
 
 def _build_header(story, styles, title: str, subtitle: str, subtitle2: str = ""):
-    # Title block with background
-    title_data = [[Paragraph(title, styles["NoticeTitle"])]]
-    title_t = Table(title_data, colWidths=[170 * mm])
-    title_t.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, -1), BLACK),
-                ("TEXTCOLOR", (0, 0), (-1, -1), WHITE),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-            ]
-        )
-    )
-
     # Override title color for dark background
     white_title = ParagraphStyle(
         "WhiteTitle",
@@ -143,16 +127,6 @@ def _build_header(story, styles, title: str, subtitle: str, subtitle2: str = "")
         spaceAfter=0,
         leading=12,
     )
-
-    header_content = [Paragraph(title, white_title)]
-    if subtitle:
-        header_content.append(Paragraph(subtitle, white_sub))
-    if subtitle2:
-        header_content.append(Paragraph(subtitle2, white_sub))
-
-    from reportlab.platypus import KeepTogether
-
-    header_rows = [[item] for item in header_content]
 
     # Build header as single table with dark background
     all_header = [[Paragraph(title, white_title)]]

@@ -3,7 +3,9 @@ import pathlib
 import psycopg2
 from datetime import date
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
+from config.settings import settings
+
+DATABASE_URL = settings.sync_database_url
 
 ACT_METADATA = {
     "rti_2005": {

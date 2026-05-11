@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import type { Language } from "../App";
 import type { AnalyzeResponse } from "../types";
 import ConfidenceBadge from "../components/ConfidenceBadge";
@@ -9,7 +9,7 @@ import Footer from "../components/Footer";
 import EvidenceChecklist from "../components/EvidenceChecklist";
 import ShareButton from "../components/ShareButton";
 import NoticeForm from "../components/NoticeForm";
-import { submitFeedback } from "../api";
+import { getSituation, submitFeedback } from "../api";
 
 interface ResultProps {
   language: Language;
@@ -18,15 +18,24 @@ interface ResultProps {
 export default function Result({ language }: ResultProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const result = location.state?.result as AnalyzeResponse | undefined;
+  const { id } = useParams();
+  const [result, setResult] = useState<AnalyzeResponse | undefined>(
+    location.state?.result,
+  );
+  const [loading, setLoading] = useState(!location.state?.result && !!id);
   const [feedbackGiven, setFeedbackGiven] = useState<1 | -1 | null>(null);
 
-  if (!result) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!location.state?.result && id) {
+      getSituation(id)
+        .then((data) => setResult(data))
+        .catch(() => navigate("/"))
+        .finally(() => setLoading(false));
+    }
+  }, [id, location.state?.result, navigate]);
 
   const handleFeedback = async (rating: 1 | -1) => {
+    if (!result) return;
     try {
       await submitFeedback(result.situation_id, rating);
       setFeedbackGiven(rating);
@@ -34,6 +43,19 @@ export default function Result({ language }: ResultProps) {
       console.error("Failed to submit feedback:", error);
     }
   };
+
+  if (loading) {
+    return (
+      <main className="max-w-3xl mx-auto px-6 py-8">
+        <p className="text-sm text-ink-3">Loading...</p>
+      </main>
+    );
+  }
+
+  if (!result) {
+    navigate("/");
+    return null;
+  }
 
   if (result.fallback) {
     return (

@@ -48,7 +48,7 @@ class ClassificationResult(BaseModel):
     confidence: str
 
 
-def classify(text: str, language: str = "en") -> ClassificationResult:
+def classify(text: str) -> ClassificationResult:
     prompt = CLASSIFICATION_PROMPT.format(
         domains=", ".join(DOMAINS),
         situation=text,
@@ -66,7 +66,12 @@ def classify(text: str, language: str = "en") -> ClassificationResult:
     raw = re.sub(r"\s*```$", "", raw)
     raw = raw.strip()
 
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return ClassificationResult(
+            domain="other", sub_domain="unknown", state=None, confidence="low"
+        )
 
     if data.get("domain") not in DOMAINS:
         data["domain"] = "other"

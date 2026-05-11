@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import uuid
 
@@ -8,13 +9,13 @@ from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from config.settings import settings
 from db.redis import queue
 from pipeline.notice_generator import NOTICE_GENERATORS
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 PDF_DIR = pathlib.Path("generated_notices")
 PDF_DIR.mkdir(exist_ok=True)
 
@@ -42,7 +43,7 @@ class DraftRequest(BaseModel):
 def generate_pdf_job(
     notice_id: str, notice_type: str, sender: dict, recipient: dict, extra: dict
 ):
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(settings.sync_database_url)
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT content FROM notices WHERE id = %s", (notice_id,))
@@ -126,6 +127,62 @@ def _build_notice_content(
     return templates.get(notice_type, "Legal Notice")
 
 
+def _insert_notice(
+    notice_id: str, situation_id: str | None, notice_type: str, content: str
+) -> None:
+    conn = psycopg2.connect(settings.sync_database_url)
+    try:
+        cursor = conn.cursor()
+        if situation_id:
+            cursor.execute(
+                "INSERT INTO notices (id, situation_id, notice_type, content) "
+                "VALUES (%s, %s, %s, %s)",
+                (notice_id, situation_id, notice_type, content),
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO notices (id, notice_type, content) VALUES (%s, %s, %s)",
+                (notice_id, notice_type, content),
+            )
+        cursor.execute(
+            "INSERT INTO pdf_jobs (notice_id, status) VALUES (%s, 'queued')",
+            (notice_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _get_notice_download_status(notice_id: str) -> dict:
+    conn = psycopg2.connect(settings.sync_database_url)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT pdf_path, pdf_ready FROM notices WHERE id = %s", (notice_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return {"found": False}
+        pdf_path, pdf_ready = row
+        if pdf_ready and pdf_path and pathlib.Path(pdf_path).exists():
+            return {"found": True, "ready": True, "pdf_path": pdf_path}
+        cursor.execute(
+            "SELECT status, error FROM pdf_jobs WHERE notice_id = %s", (notice_id,)
+        )
+        job_row = cursor.fetchone()
+        if job_row:
+            status, error = job_row
+            return {
+                "found": True,
+                "ready": False,
+                "job_status": status,
+                "job_error": error,
+            }
+        return {"found": True, "ready": False, "job_status": None, "job_error": None}
+    finally:
+        conn.close()
+
+
 @router.post("/draft")
 @limiter.limit("5/hour")
 async def create_draft(request: Request, body: DraftRequest):
@@ -143,38 +200,13 @@ async def create_draft(request: Request, body: DraftRequest):
         body.extra,
     )
 
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        cursor = conn.cursor()
-
-        if body.situation_id:
-            cursor.execute(
-                """
-                INSERT INTO notices (id, situation_id, notice_type, content)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (notice_id, body.situation_id, body.notice_type, content),
-            )
-        else:
-            cursor.execute(
-                """
-                INSERT INTO notices (id, notice_type, content)
-                VALUES (%s, %s, %s)
-                """,
-                (notice_id, body.notice_type, content),
-            )
-
-        cursor.execute(
-            """
-            INSERT INTO pdf_jobs (notice_id, status)
-            VALUES (%s, 'queued')
-            """,
-            (notice_id,),
-        )
-
-        conn.commit()
-    finally:
-        conn.close()
+    await asyncio.to_thread(
+        _insert_notice,
+        notice_id,
+        body.situation_id,
+        body.notice_type,
+        content,
+    )
 
     job = queue.enqueue(
         generate_pdf_job,
@@ -195,43 +227,22 @@ async def create_draft(request: Request, body: DraftRequest):
 
 @router.get("/draft/{notice_id}/download")
 async def download_draft(notice_id: str):
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT pdf_path, pdf_ready FROM notices WHERE id = %s", (notice_id,)
-        )
-        row = cursor.fetchone()
-    finally:
-        conn.close()
+    status = await asyncio.to_thread(_get_notice_download_status, notice_id)
 
-    if not row:
+    if not status["found"]:
         raise HTTPException(status_code=404, detail="Notice not found")
 
-    pdf_path, pdf_ready = row
-
-    if pdf_ready and pdf_path and pathlib.Path(pdf_path).exists():
+    if status.get("ready"):
         return FileResponse(
-            path=pdf_path,
+            path=status["pdf_path"],
             media_type="application/pdf",
             filename=f"haqq_notice_{notice_id[:8]}.pdf",
         )
 
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT status, error FROM pdf_jobs WHERE notice_id = %s", (notice_id,)
+    if status.get("job_status") == "failed":
+        raise HTTPException(
+            status_code=500,
+            detail={"status": "failed", "error": status["job_error"]},
         )
-        job_row = cursor.fetchone()
-    finally:
-        conn.close()
-
-    if job_row:
-        status, error = job_row
-        if status == "failed":
-            raise HTTPException(
-                status_code=500, detail={"status": "failed", "error": error}
-            )
 
     return {"status": "processing"}

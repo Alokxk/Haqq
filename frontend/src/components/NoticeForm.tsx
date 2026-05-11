@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Language } from "../App";
 import { createDraft, getPdfDownloadUrl } from "../api";
 
@@ -50,6 +50,14 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
   >("idle");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+    },
+    [],
+  );
 
   const update = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -96,23 +104,27 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       let attempts = 0;
 
       const poll = async () => {
+        if (!mountedRef.current) return;
         attempts++;
         try {
           const url = getPdfDownloadUrl(noticeId);
           const res = await fetch(url);
           if (res.ok && res.headers.get("content-type")?.includes("pdf")) {
+            if (!mountedRef.current) return;
             setDownloadUrl(url);
             setStatus("done");
             return;
           }
           const data = await res.json();
           if (data.status === "failed") {
+            if (!mountedRef.current) return;
             setStatus("error");
             setErrorMsg(data.error || "PDF generation failed.");
             return;
           }
           if (attempts < 15) setTimeout(poll, 2000);
           else {
+            if (!mountedRef.current) return;
             setStatus("error");
             setErrorMsg(
               language === "en"
@@ -121,6 +133,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
             );
           }
         } catch {
+          if (!mountedRef.current) return;
           setStatus("error");
           setErrorMsg(
             language === "en" ? "Something went wrong." : "कुछ गलत हो गया।",

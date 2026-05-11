@@ -1,5 +1,7 @@
+import asyncio
 from contextlib import asynccontextmanager
 
+import psycopg2
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -59,26 +61,32 @@ async def health():
     }
 
 
-@app.get("/health/detailed")
-async def health_detailed():
-    redis_ok = ping_redis()
-
-    corpus_chunks = 0
-    last_ingest = None
-    total_analyses = 0
+def _db_stats() -> dict:
+    conn = psycopg2.connect(settings.sync_database_url)
     try:
-        import psycopg2
-
-        conn = psycopg2.connect("postgresql://postgres:postgres@localhost/haqq")
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM legal_corpus")
         corpus_chunks = cursor.fetchone()[0]
         cursor.execute("SELECT MAX(last_updated) FROM legal_corpus")
         last_ingest = cursor.fetchone()[0]
-        last_ingest = last_ingest.isoformat() if last_ingest else None
         cursor.execute("SELECT COUNT(*) FROM situations")
         total_analyses = cursor.fetchone()[0]
+        return {
+            "corpus_chunks": corpus_chunks,
+            "last_ingest": last_ingest.isoformat() if last_ingest else None,
+            "total_analyses": total_analyses,
+        }
+    finally:
         conn.close()
+
+
+@app.get("/health/detailed")
+async def health_detailed():
+    redis_ok = ping_redis()
+
+    db = {"corpus_chunks": 0, "last_ingest": None, "total_analyses": 0}
+    try:
+        db = await asyncio.to_thread(_db_stats)
     except Exception:
         pass
 
@@ -92,8 +100,6 @@ async def health_detailed():
         "status": "ok",
         "db": "ok",
         "redis": "ok" if redis_ok else "unavailable",
-        "corpus_chunks": corpus_chunks,
-        "last_ingest": last_ingest,
+        **db,
         "redis_queue_depth": redis_queue_depth,
-        "total_analyses": total_analyses,
     }

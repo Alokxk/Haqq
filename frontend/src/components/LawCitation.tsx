@@ -22,17 +22,19 @@ export default function LawCitation({ law, language }: LawCitationProps) {
             : `अंतिम सत्यापन: ${law.last_updated}। indiacode.nic.in पर सत्यापित करें`}
         </p>
       )}
-      <a
-        href={law.indiacode_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-xs text-accent hover:underline mt-2 inline-block"
-      >
-        ↗{" "}
-        {language === "en"
-          ? "View on indiacode.nic.in"
-          : "indiacode.nic.in पर देखें"}
-      </a>
+      {law.indiacode_url && (
+        <a
+          href={law.indiacode_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-accent hover:underline mt-2 inline-block"
+        >
+          ↗{" "}
+          {language === "en"
+            ? "View on indiacode.nic.in"
+            : "indiacode.nic.in पर देखें"}
+        </a>
+      )}
     </div>
   );
 }

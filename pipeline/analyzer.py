@@ -127,7 +127,10 @@ def analyze(
     raw = re.sub(r"\s*```$", "", raw)
     raw = raw.strip()
 
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"LLM returned malformed JSON: {e}") from e
 
     data.setdefault("rights", [])
     data.setdefault("remedies", [])

@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from config.settings import settings
 from pipeline.retriever import retrieve, get_query_embedding, hybrid_search
 
 router = APIRouter()
@@ -10,6 +11,8 @@ async def debug_retrieval(
     domain: str | None = None,
     state: str | None = None,
 ):
+    if settings.environment != "development":
+        raise HTTPException(status_code=403, detail="Not available")
     query_vector = get_query_embedding(q)
     chunks = hybrid_search(
         query_text=q,

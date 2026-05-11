@@ -1,7 +1,9 @@
 import psycopg2
 from pgvector.psycopg2 import register_vector
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
+from config.settings import settings
+
+DATABASE_URL = settings.sync_database_url
 
 TEST_CASES = [
     {

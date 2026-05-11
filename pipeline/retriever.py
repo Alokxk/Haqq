@@ -3,9 +3,9 @@ import psycopg2
 from pgvector.psycopg2 import register_vector
 from fastembed import TextEmbedding
 
-warnings.filterwarnings("ignore")
+from config.settings import settings
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
+warnings.filterwarnings("ignore")
 
 SEMANTIC_WEIGHT = 0.7
 KEYWORD_WEIGHT = 0.3
@@ -41,7 +41,7 @@ def hybrid_search(
     state: str | None = None,
     top_k: int = TOP_K,
 ) -> list[dict]:
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(settings.sync_database_url)
     register_vector(conn)
     cursor = conn.cursor()
 

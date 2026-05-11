@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import logging
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from config.settings import settings
 from db.redis import redis_conn
 from pipeline.analyzer import analyze, fallback_response
 from pipeline.classifier import classify
@@ -20,7 +22,6 @@ router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
 CACHE_TTL = 6 * 60 * 60
 
 DISCLAIMER = (
@@ -56,7 +57,7 @@ def _save_situation(
     query_embedding: list[float] | None = None,
 ) -> str:
     situation_id = str(uuid.uuid4())
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(settings.sync_database_url)
     try:
         cursor = conn.cursor()
         register_vector(conn)
@@ -95,7 +96,7 @@ def _find_similar_situations(
     exclude_id: str,
     limit: int = 3,
 ) -> list[dict]:
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(settings.sync_database_url)
     register_vector(conn)
     try:
         cursor = conn.cursor()
@@ -118,10 +119,24 @@ def _find_similar_situations(
                 "summary": row[1][:100] + "..." if len(row[1]) > 100 else row[1],
                 "domain": row[2],
                 "confidence": row[3],
-                "url": f"https://haqq.in/s/{row[0]}",
+                "url": f"{settings.public_url}/s/{row[0]}",
             }
             for row in rows
         ]
+    finally:
+        conn.close()
+
+
+def _fetch_situation(situation_id: str) -> tuple | None:
+    conn = psycopg2.connect(settings.sync_database_url)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT analysis, confidence, top_score, fallback "
+            "FROM situations WHERE id = %s",
+            (situation_id,),
+        )
+        return cursor.fetchone()
     finally:
         conn.close()
 
@@ -149,9 +164,10 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         )
         return response
 
-    classification = classify(body.text, body.language)
+    classification = await asyncio.to_thread(classify, body.text)
 
-    retrieval = retrieve(
+    retrieval = await asyncio.to_thread(
+        retrieve,
         query_text=body.text,
         domain=classification.domain if classification.confidence != "low" else None,
         state=body.state
@@ -166,24 +182,25 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     query_vector = retrieval["query_vector"]
 
     if is_fallback:
-        situation_id = _save_situation(
-            session_id=session_id,
-            raw_input=body.text,
-            language=body.language,
-            domain=classification.domain,
-            sub_domain=classification.sub_domain,
-            state=body.state,
-            analysis={},
-            laws_cited=[],
-            confidence="low",
-            top_score=top_score,
-            fallback=True,
-            query_embedding=query_vector,
+        situation_id = await asyncio.to_thread(
+            _save_situation,
+            session_id,
+            body.text,
+            body.language,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            {},
+            [],
+            "low",
+            top_score,
+            True,
+            query_vector,
         )
         response = fallback_response()
         response["situation_id"] = situation_id
         response["cached"] = False
-        response["share_url"] = f"https://haqq.in/s/{situation_id}"
+        response["share_url"] = f"{settings.public_url}/s/{situation_id}"
         response["disclaimer"] = DISCLAIMER
         response["similar_situations"] = []
         logger.info(
@@ -198,37 +215,65 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         )
         return response
 
-    analysis_result = analyze(
-        situation=body.text,
-        chunks=chunks,
-        domain=classification.domain,
-        language=body.language,
-    )
+    try:
+        analysis_result = await asyncio.to_thread(
+            analyze,
+            situation=body.text,
+            chunks=chunks,
+            domain=classification.domain,
+            language=body.language,
+        )
+    except ValueError:
+        situation_id = await asyncio.to_thread(
+            _save_situation,
+            session_id,
+            body.text,
+            body.language,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            {},
+            [],
+            "low",
+            top_score,
+            True,
+            query_vector,
+        )
+        response = fallback_response()
+        response["situation_id"] = situation_id
+        response["cached"] = False
+        response["share_url"] = f"{settings.public_url}/s/{situation_id}"
+        response["disclaimer"] = DISCLAIMER
+        response["similar_situations"] = []
+        return response
 
     laws_cited = [
         f"{law['act_short']}_{law['section']}" for law in analysis_result.laws
     ]
 
-    situation_id = _save_situation(
-        session_id=session_id,
-        raw_input=body.text,
-        language=body.language,
-        domain=classification.domain,
-        sub_domain=classification.sub_domain,
-        state=body.state,
-        analysis=analysis_result.model_dump(),
-        laws_cited=laws_cited,
-        confidence=confidence,
-        top_score=top_score,
-        fallback=False,
-        query_embedding=query_vector,
+    situation_id = await asyncio.to_thread(
+        _save_situation,
+        session_id,
+        body.text,
+        body.language,
+        classification.domain,
+        classification.sub_domain,
+        body.state,
+        analysis_result.model_dump(),
+        laws_cited,
+        confidence,
+        top_score,
+        False,
+        query_vector,
     )
 
-    similar = _find_similar_situations(query_vector, situation_id)
+    similar = await asyncio.to_thread(
+        _find_similar_situations, query_vector, situation_id
+    )
 
     response = {
         "situation_id": situation_id,
-        "share_url": f"https://haqq.in/s/{situation_id}",
+        "share_url": f"{settings.public_url}/s/{situation_id}",
         "domain": classification.domain,
         "sub_domain": classification.sub_domain,
         "state": body.state or classification.state,
@@ -267,17 +312,7 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
 
 @router.get("/s/{situation_id}")
 async def get_shared_situation(situation_id: str):
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT analysis, confidence, top_score, fallback "
-            "FROM situations WHERE id = %s",
-            (situation_id,),
-        )
-        row = cursor.fetchone()
-    finally:
-        conn.close()
+    row = await asyncio.to_thread(_fetch_situation, situation_id)
 
     if not row:
         raise HTTPException(status_code=404, detail="Situation not found")

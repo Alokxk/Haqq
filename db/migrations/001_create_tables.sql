@@ -61,7 +61,7 @@ CREATE INDEX idx_corpus_state  ON legal_corpus(state);
 
 CREATE TABLE pdf_jobs (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    notice_id    UUID REFERENCES notices(id),
+    notice_id    UUID UNIQUE REFERENCES notices(id),
     status       VARCHAR(20) DEFAULT 'queued',
     error        TEXT,
     created_at   TIMESTAMPTZ DEFAULT NOW(),

@@ -4,9 +4,11 @@ import warnings
 from pgvector.psycopg2 import register_vector
 from fastembed import TextEmbedding
 
+from config.settings import settings
+
 warnings.filterwarnings("ignore")
 
-DATABASE_URL = "postgresql://postgres:postgres@localhost/haqq"
+DATABASE_URL = settings.sync_database_url
 BATCH_SIZE = 10
 MODEL_NAME = "intfloat/multilingual-e5-large"
 
