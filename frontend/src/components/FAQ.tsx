@@ -1,86 +1,84 @@
 import { useState } from "react";
-import type { Language } from "../App";
-
-interface FAQItem {
-  question: string;
-  answer: string;
-}
-
-const FAQ_CONTENT: Record<Language, FAQItem[]> = {
+const FAQ_CONTENT = {
   en: [
     {
-      question: "Is this free?",
-      answer: "Yes, always. Haqq is free for everyone.",
+      q: "Is Haqq actually free?",
+      a: "Yes. No sign-up, no payment, no ads. Haqq is free for everyone — always.",
     },
     {
-      question: "Can I trust this?",
-      answer:
-        "Every answer cites the exact law section with a direct link to indiacode.nic.in. Verify it yourself.",
+      q: "Can I trust what Haqq tells me?",
+      a: "Every answer cites the exact law section with a direct link to indiacode.nic.in — the Government of India's official legal repository. Verify it yourself in 30 seconds.",
     },
     {
-      question: "Is this a lawyer replacement?",
-      answer:
-        "No. For court proceedings, consult a registered advocate. Haqq helps you understand your rights and take the first step.",
+      q: "Does this replace a lawyer?",
+      a: "No. For court proceedings, hire a registered advocate. Haqq helps you understand your rights so you walk in informed — and don't get taken advantage of.",
     },
     {
-      question: "What if my state isn't covered?",
-      answer:
-        "Central acts apply everywhere in India. State-specific laws are ongoing work.",
+      q: "Which laws are covered?",
+      a: "RTI Act (2005), Payment of Wages Act (1936), Consumer Protection Act (2019), POSH Act (2013), IPC (1860), CrPC (1973), Negotiable Instruments Act (1881), Delhi Rent Control Act (1958). More being added.",
+    },
+    {
+      q: "What if my situation isn't covered?",
+      a: "Haqq will tell you honestly when it doesn't have enough info and will point you to free legal aid services like State Legal Services Authorities.",
     },
   ],
   hi: [
     {
-      question: "क्या यह मुफ्त है?",
-      answer: "हां, हमेशा। Haqq सभी के लिए मुफ्त है।",
+      q: "क्या Haqq सच में मुफ्त है?",
+      a: "हां। कोई साइन-अप नहीं, कोई भुगतान नहीं, कोई विज्ञापन नहीं। Haqq हमेशा सभी के लिए मुफ्त रहेगा।",
     },
     {
-      question: "क्या मैं इस पर भरोसा कर सकता हूं?",
-      answer:
-        "हर जवाब सटीक कानून धारा का हवाला देता है और indiacode.nic.in का सीधा लिंक देता है। खुद सत्यापित करें।",
+      q: "क्या Haqq की बात पर भरोसा कर सकते हैं?",
+      a: "हर जवाब indiacode.nic.in का सीधा लिंक देता है — भारत सरकार का आधिकारिक कानूनी डेटाबेस। 30 सेकंड में खुद जांचें।",
     },
     {
-      question: "क्या यह वकील की जगह है?",
-      answer:
-        "नहीं। अदालती कार्यवाही के लिए किसी पंजीकृत वकील से सलाह लें। Haqq आपको अपने अधिकार समझने और पहला कदम उठाने में मदद करता है।",
+      q: "क्या यह वकील की जगह है?",
+      a: "नहीं। अदालती कार्यवाही के लिए पंजीकृत वकील लें। Haqq आपको अपने अधिकार समझने में मदद करता है।",
     },
     {
-      question: "अगर मेरा राज्य कवर नहीं है?",
-      answer:
-        "केंद्रीय कानून पूरे भारत में लागू होते हैं। राज्य-विशिष्ट कानून जारी काम है।",
+      q: "कौन से कानून कवर हैं?",
+      a: "RTI, मजदूरी भुगतान, उपभोक्ता संरक्षण, POSH, IPC, CrPC, NIA, DRCA। और कानून जोड़े जा रहे हैं।",
+    },
+    {
+      q: "अगर मेरी स्थिति कवर नहीं है?",
+      a: "Haqq ईमानदारी से बताएगा और मुफ्त कानूनी सहायता के लिए सुझाव देगा।",
     },
   ],
 };
 
-interface FAQProps {
-  language: Language;
-}
-
-export default function FAQ({ language }: FAQProps) {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+export default function FAQ({ language }: { language: "en" | "hi" }) {
+  const [open, setOpen] = useState<number | null>(null);
   const items = FAQ_CONTENT[language];
 
   return (
-    <div className="mt-16">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">
-        {language === "en"
-          ? "Frequently Asked Questions"
-          : "अक्सर पूछे जाने वाले प्रश्न"}
-      </h2>
-      <div className="divide-y divide-gray-200 border-t border-gray-200">
-        {items.map((item, index) => (
-          <div key={index}>
+    <div className="py-12">
+      <p className="text-xs font-semibold tracking-widest uppercase text-ink-3 mb-6">
+        {language === "en" ? "Common questions" : "सामान्य प्रश्न"}
+      </p>
+      <div className="divide-y divide-border">
+        {items.map((item, i) => (
+          <div key={i}>
             <button
-              onClick={() => setOpenIndex(openIndex === index ? null : index)}
-              className="w-full text-left py-4 flex justify-between items-center text-sm font-medium text-gray-900 hover:text-primary"
+              onClick={() => setOpen(open === i ? null : i)}
+              className="w-full text-left py-4 flex justify-between items-start gap-4 group"
             >
-              {item.question}
-              <span className="ml-4 text-gray-400">
-                {openIndex === index ? "−" : "+"}
+              <span className="text-sm font-medium text-ink group-hover:text-accent transition-colors">
+                {item.q}
+              </span>
+              <span
+                className="text-ink-3 shrink-0 text-lg leading-none"
+                style={{
+                  transition: "transform 0.2s",
+                  transform: open === i ? "rotate(45deg)" : "rotate(0deg)",
+                  display: "inline-block",
+                }}
+              >
+                +
               </span>
             </button>
-            {openIndex === index && (
-              <p className="pb-4 text-sm text-gray-600 leading-relaxed">
-                {item.answer}
+            {open === i && (
+              <p className="pb-5 text-sm text-ink-3 leading-relaxed max-w-2xl">
+                {item.a}
               </p>
             )}
           </div>

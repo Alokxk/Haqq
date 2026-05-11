@@ -14,15 +14,15 @@ export default function ShareButton({ url, language }: ShareButtonProps) {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // clipboard not available
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
     }
   };
 
   return (
     <button
       onClick={handleCopy}
-      className="text-sm border border-gray-300 rounded px-3 py-1.5 text-gray-600 hover:border-primary hover:text-primary transition-colors"
+      className="text-sm border border-border rounded-lg px-3 py-1.5 text-ink-3 hover:border-accent/40 hover:text-accent transition-colors bg-surface-2"
     >
       {copied
         ? language === "en"

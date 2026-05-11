@@ -9,13 +9,8 @@ interface SituationInputProps {
 }
 
 const PLACEHOLDER = {
-  en: "Describe your situation... e.g. My landlord hasn't returned my security deposit even after 3 months of vacating.",
-  hi: "अपनी स्थिति बताएं... जैसे मेरे मकान मालिक ने 3 महीने बाद भी सिक्योरिटी डिपॉजिट वापस नहीं किया।",
-};
-
-const BUTTON_TEXT = {
-  en: "→ Know My Rights",
-  hi: "→ मेरे अधिकार जानें",
+  en: "e.g. My landlord hasn't returned my security deposit after 3 months. He's not responding to calls...",
+  hi: "जैसे: मकान मालिक ने 3 महीने बाद भी सिक्योरिटी डिपॉजिट वापस नहीं किया...",
 };
 
 export default function SituationInput({
@@ -42,19 +37,21 @@ export default function SituationInput({
         onKeyDown={handleKeyDown}
         placeholder={PLACEHOLDER[language]}
         rows={4}
-        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
         disabled={loading}
+        className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 resize-none transition-all"
       />
       <button
         onClick={handleSubmit}
         disabled={loading || value.trim().length < 10}
-        className="mt-3 w-full bg-primary text-white font-semibold py-3 px-6 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full bg-accent text-white font-semibold py-3 px-6 rounded-xl hover:bg-accent-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm tracking-wide"
       >
         {loading
           ? language === "en"
-            ? "Finding your rights..."
-            : "आपके अधिकार खोज रहे हैं..."
-          : BUTTON_TEXT[language]}
+            ? "Analysing your situation..."
+            : "विश्लेषण हो रहा है..."
+          : language === "en"
+            ? "Know My Rights →"
+            : "मेरे अधिकार जानें →"}
       </button>
     </div>
   );

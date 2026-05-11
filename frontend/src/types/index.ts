@@ -16,6 +16,14 @@ export interface Remedy {
   timeline: string;
 }
 
+export interface SimilarSituation {
+  situation_id: string;
+  summary: string;
+  domain: string;
+  confidence: string;
+  url: string;
+}
+
 export interface AnalyzeResponse {
   situation_id: string;
   share_url: string;
@@ -33,6 +41,7 @@ export interface AnalyzeResponse {
   evidence_checklist: string[];
   disclaimer: string;
   fallback_message?: string;
+  similar_situations?: SimilarSituation[];
 }
 
 export interface Example {

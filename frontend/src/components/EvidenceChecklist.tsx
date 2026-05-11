@@ -13,17 +13,17 @@ export default function EvidenceChecklist({
 
   return (
     <section className="mb-8">
-      <h2 className="text-base font-semibold text-gray-900 mb-3 uppercase tracking-wide text-xs">
+      <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3">
         {language === "en" ? "Evidence to Preserve" : "सबूत सुरक्षित रखें"}
       </h2>
-      <ul className="space-y-2">
+      <div className="border border-border rounded-xl p-4 bg-surface-2 space-y-2">
         {items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-            <span className="mt-0.5 text-gray-400">□</span>
+          <div key={i} className="flex items-start gap-3 text-sm text-ink-2">
+            <span className="mt-0.5 text-border-2 shrink-0">□</span>
             <span>{item}</span>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }

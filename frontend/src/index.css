@@ -1,11 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Noto Sans', sans-serif;
-  background-color: #ffffff;
-  color: #111827;
+  font-family: 'Space Grotesk', sans-serif;
+  background-color: #f0f2f5;
+  color: #0d1117;
+  -webkit-font-smoothing: antialiased;
 }
+
+::selection { background-color: #2563eb; color: white; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f0f2f5; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }

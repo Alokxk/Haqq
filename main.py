@@ -63,9 +63,9 @@ async def health():
 async def health_detailed():
     redis_ok = ping_redis()
 
-    # Real corpus chunk count
     corpus_chunks = 0
     last_ingest = None
+    total_analyses = 0
     try:
         import psycopg2
 
@@ -76,11 +76,12 @@ async def health_detailed():
         cursor.execute("SELECT MAX(last_updated) FROM legal_corpus")
         last_ingest = cursor.fetchone()[0]
         last_ingest = last_ingest.isoformat() if last_ingest else None
+        cursor.execute("SELECT COUNT(*) FROM situations")
+        total_analyses = cursor.fetchone()[0]
         conn.close()
     except Exception:
         pass
 
-    # Real Redis queue depth
     redis_queue_depth = 0
     try:
         redis_queue_depth = redis_conn.llen("rq:queue:haqq")
@@ -94,4 +95,5 @@ async def health_detailed():
         "corpus_chunks": corpus_chunks,
         "last_ingest": last_ingest,
         "redis_queue_depth": redis_queue_depth,
+        "total_analyses": total_analyses,
     }

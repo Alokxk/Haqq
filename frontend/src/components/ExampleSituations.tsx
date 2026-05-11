@@ -8,11 +8,6 @@ interface ExampleSituationsProps {
   onSelect: (text: string) => void;
 }
 
-const LABEL = {
-  en: "Or try an example:",
-  hi: "या एक उदाहरण आज़माएं:",
-};
-
 export default function ExampleSituations({
   language,
   onSelect,
@@ -28,14 +23,16 @@ export default function ExampleSituations({
   if (examples.length === 0) return null;
 
   return (
-    <div className="mt-6">
-      <p className="text-sm text-gray-500 mb-3">{LABEL[language]}</p>
+    <div className="mt-3">
+      <p className="text-xs font-medium text-ink-3/60 uppercase tracking-wider mb-2">
+        {language === "en" ? "Try an example" : "उदाहरण आज़माएं"}
+      </p>
       <div className="flex flex-wrap gap-2">
         {examples.map((example) => (
           <button
             key={example.id}
             onClick={() => onSelect(example.text)}
-            className="text-sm border border-gray-300 rounded-full px-3 py-1.5 text-gray-700 hover:border-primary hover:text-primary transition-colors"
+            className="text-xs border border-border rounded-lg px-3 py-1.5 text-ink-3 bg-bg hover:border-accent/40 hover:text-accent transition-all"
           >
             {example.label}
           </button>

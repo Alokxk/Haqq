@@ -27,6 +27,10 @@ const NOTICE_TYPES = [
   { value: "cheque_bounce_notice", label: "Cheque Bounce Notice" },
 ];
 
+const inputClass =
+  "w-full border border-border rounded-lg px-3 py-2 text-sm text-ink bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all";
+const labelClass = "block text-xs font-medium text-ink-3 mb-1";
+
 export default function NoticeForm({ situationId, language }: NoticeFormProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormData>({
@@ -47,9 +51,8 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const update = (field: keyof FormData, value: string) => {
+  const update = (field: keyof FormData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
-  };
 
   const handleGenerate = async () => {
     if (
@@ -65,7 +68,6 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       );
       return;
     }
-
     setStatus("generating");
     setErrorMsg(null);
 
@@ -86,15 +88,11 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
           phone: form.senderPhone || undefined,
           email: form.senderEmail || undefined,
         },
-        recipient: {
-          name: form.recipientName,
-          address: form.recipientAddress,
-        },
+        recipient: { name: form.recipientName, address: form.recipientAddress },
         extra,
       });
 
       const noticeId = draft.notice_id;
-      const maxAttempts = 15;
       let attempts = 0;
 
       const poll = async () => {
@@ -102,28 +100,24 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
         try {
           const url = getPdfDownloadUrl(noticeId);
           const res = await fetch(url);
-
           if (res.ok && res.headers.get("content-type")?.includes("pdf")) {
             setDownloadUrl(url);
             setStatus("done");
             return;
           }
-
           const data = await res.json();
           if (data.status === "failed") {
             setStatus("error");
             setErrorMsg(data.error || "PDF generation failed.");
             return;
           }
-
-          if (attempts < maxAttempts) {
-            setTimeout(poll, 2000);
-          } else {
+          if (attempts < 15) setTimeout(poll, 2000);
+          else {
             setStatus("error");
             setErrorMsg(
               language === "en"
-                ? "PDF generation timed out. Please try again."
-                : "PDF तैयार होने में समय लग रहा है। पुनः प्रयास करें।",
+                ? "PDF generation timed out."
+                : "PDF तैयार होने में समय लग रहा है।",
             );
           }
         } catch {
@@ -139,19 +133,15 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       setStatus("error");
       setErrorMsg(
         language === "en"
-          ? "Failed to create notice. Please try again."
-          : "नोटिस बनाने में विफल। पुनः प्रयास करें।",
+          ? "Failed to create notice."
+          : "नोटिस बनाने में विफल।",
       );
     }
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent";
-  const labelClass = "block text-xs font-medium text-gray-700 mb-1";
-
   return (
     <section className="mb-8">
-      <h2 className="text-base font-semibold text-gray-900 mb-3 uppercase tracking-wide text-xs">
+      <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3">
         {language === "en"
           ? "Draft Your Legal Notice"
           : "कानूनी नोटिस तैयार करें"}
@@ -160,12 +150,12 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="text-sm border border-gray-300 rounded px-4 py-2 text-gray-700 hover:border-primary hover:text-primary transition-colors"
+          className="text-sm border border-border rounded-lg px-4 py-2 text-ink-2 hover:border-accent/40 hover:text-accent transition-colors bg-surface-2"
         >
-          {language === "en" ? "Generate Notice PDF" : "नोटिस PDF बनाएं"}
+          {language === "en" ? "Generate Notice PDF →" : "नोटिस PDF बनाएं →"}
         </button>
       ) : (
-        <div className="border border-gray-200 rounded-lg p-5 space-y-4">
+        <div className="border border-border rounded-xl p-5 bg-surface-2 space-y-4">
           <div>
             <label className={labelClass}>
               {language === "en" ? "Notice Type" : "नोटिस प्रकार"}
@@ -300,13 +290,13 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
             </div>
           )}
 
-          {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
+          {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
 
           {status === "done" && downloadUrl ? (
             <a
               href={downloadUrl}
               download
-              className="inline-block bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
+              className="inline-block bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-accent-dark transition-colors"
             >
               {language === "en" ? "Download PDF" : "PDF डाउनलोड करें"}
             </a>
@@ -314,7 +304,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
             <button
               onClick={handleGenerate}
               disabled={status === "generating"}
-              className="bg-primary text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {status === "generating"
                 ? language === "en"

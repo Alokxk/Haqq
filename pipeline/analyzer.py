@@ -129,6 +129,12 @@ def analyze(
 
     data = json.loads(raw)
 
+    data.setdefault("rights", [])
+    data.setdefault("remedies", [])
+    data.setdefault("laws", [])
+    data.setdefault("evidence_checklist", [])
+    data.setdefault("confidence_reason", "Analysis based on retrieved law sections.")
+
     chunk_map = {f"{c['act_short']}_{c['section_number']}": c for c in chunks}
 
     act_url_map = {
