@@ -6,6 +6,7 @@ import uuid
 
 import psycopg2
 from fastapi import APIRouter, HTTPException, Request
+from pgvector.psycopg2 import register_vector
 from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -52,17 +53,20 @@ def _save_situation(
     confidence: str,
     top_score: float,
     fallback: bool,
+    query_embedding: list[float] | None = None,
 ) -> str:
     situation_id = str(uuid.uuid4())
     conn = psycopg2.connect(DATABASE_URL)
     try:
         cursor = conn.cursor()
+        register_vector(conn)
         cursor.execute(
             """
             INSERT INTO situations (
                 id, session_id, raw_input, language, domain, sub_domain,
-                state, analysis, laws_cited, confidence, top_score, fallback
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                state, analysis, laws_cited, confidence, top_score, fallback,
+                query_embedding
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 situation_id,
@@ -77,12 +81,49 @@ def _save_situation(
                 confidence,
                 top_score,
                 fallback,
+                query_embedding,
             ),
         )
         conn.commit()
     finally:
         conn.close()
     return situation_id
+
+
+def _find_similar_situations(
+    query_embedding: list[float],
+    exclude_id: str,
+    limit: int = 3,
+) -> list[dict]:
+    conn = psycopg2.connect(DATABASE_URL)
+    register_vector(conn)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, raw_input, domain, confidence
+            FROM situations
+            WHERE query_embedding IS NOT NULL
+            AND id != %s
+            AND fallback = FALSE
+            ORDER BY query_embedding <=> %s::vector
+            LIMIT %s
+            """,
+            (exclude_id, query_embedding, limit),
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "situation_id": str(row[0]),
+                "summary": row[1][:100] + "..." if len(row[1]) > 100 else row[1],
+                "domain": row[2],
+                "confidence": row[3],
+                "url": f"https://haqq.in/s/{row[0]}",
+            }
+            for row in rows
+        ]
+    finally:
+        conn.close()
 
 
 @router.post("/analyze")
@@ -122,10 +163,10 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     confidence = retrieval["confidence"]
     top_score = retrieval["top_score"]
     is_fallback = retrieval["fallback"]
+    query_vector = retrieval["query_vector"]
 
     if is_fallback:
-        response = fallback_response()
-        response["situation_id"] = _save_situation(
+        situation_id = _save_situation(
             session_id=session_id,
             raw_input=body.text,
             language=body.language,
@@ -137,10 +178,14 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
             confidence="low",
             top_score=top_score,
             fallback=True,
+            query_embedding=query_vector,
         )
+        response = fallback_response()
+        response["situation_id"] = situation_id
         response["cached"] = False
-        response["share_url"] = f"https://haqq.in/s/{response['situation_id']}"
+        response["share_url"] = f"https://haqq.in/s/{situation_id}"
         response["disclaimer"] = DISCLAIMER
+        response["similar_situations"] = []
         logger.info(
             json.dumps(
                 {
@@ -176,7 +221,10 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         confidence=confidence,
         top_score=top_score,
         fallback=False,
+        query_embedding=query_vector,
     )
+
+    similar = _find_similar_situations(query_vector, situation_id)
 
     response = {
         "situation_id": situation_id,
@@ -193,6 +241,7 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         "remedies": analysis_result.remedies,
         "laws": analysis_result.laws,
         "evidence_checklist": analysis_result.evidence_checklist,
+        "similar_situations": similar,
         "disclaimer": DISCLAIMER,
     }
 

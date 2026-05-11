@@ -14,7 +14,8 @@ CREATE TABLE situations (
     confidence      VARCHAR(10),
     top_score       NUMERIC(5,4),
     fallback        BOOLEAN DEFAULT FALSE,
-    created_at      TIMESTAMPTZ DEFAULT NOW()
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    query_embedding vector(1024)
 );
 
 CREATE TABLE notices (

@@ -154,6 +154,7 @@ def retrieve(
         "confidence": confidence,
         "top_score": top_score,
         "fallback": fallback,
+        "query_vector": query_vector,
         "filters_applied": {
             "domain": effective_domain,
             "state": effective_state,
