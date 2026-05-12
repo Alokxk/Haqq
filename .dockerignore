@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.git
+.gitignore
+frontend/
+corpus/sources/raw/
+generated_notices/
+eval/
+README.md

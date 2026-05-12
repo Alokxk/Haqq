@@ -8,3 +8,4 @@ corpus/sources/
 dist/
 node_modules/
 frontend/dist/
+db/corpus_dump.sql
