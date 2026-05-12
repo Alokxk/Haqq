@@ -43,15 +43,21 @@ export default function SituationInput({
       <button
         onClick={handleSubmit}
         disabled={loading || value.trim().length < 10}
-        className="mt-3 w-full bg-accent text-white font-semibold py-3 px-6 rounded-xl hover:bg-accent-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm tracking-wide"
+        className="mt-3 w-full bg-accent text-white font-semibold py-3 px-6 rounded-xl hover:bg-accent-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm tracking-wide flex items-center justify-center gap-2"
       >
-        {loading
-          ? language === "en"
-            ? "Analysing your situation..."
-            : "विश्लेषण हो रहा है..."
-          : language === "en"
-            ? "Know My Rights →"
-            : "मेरे अधिकार जानें →"}
+        {loading ? (
+          <>
+            <svg className="animate-spin shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
+              <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+            {language === "en" ? "Analysing..." : "विश्लेषण हो रहा है..."}
+          </>
+        ) : language === "en" ? (
+          "Know My Rights →"
+        ) : (
+          "मेरे अधिकार जानें →"
+        )}
       </button>
     </div>
   );

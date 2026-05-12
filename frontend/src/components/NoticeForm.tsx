@@ -154,7 +154,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
 
   return (
     <section className="mb-8">
-      <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3">
+      <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
         {language === "en"
           ? "Draft Your Legal Notice"
           : "कानूनी नोटिस तैयार करें"}
@@ -163,9 +163,23 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="text-sm border border-border rounded-lg px-4 py-2 text-ink-2 hover:border-accent/40 hover:text-accent transition-colors bg-surface-2"
+          className="w-full text-left border border-border rounded-xl p-4 bg-surface-2 hover:border-accent/40 transition-colors group"
         >
-          {language === "en" ? "Generate Notice PDF →" : "नोटिस PDF बनाएं →"}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-ink group-hover:text-accent transition-colors">
+                {language === "en"
+                  ? "Generate Legal Notice PDF"
+                  : "कानूनी नोटिस PDF बनाएं"}
+              </p>
+              <p className="text-xs text-ink-3 mt-0.5">
+                {language === "en"
+                  ? "Free · Takes 30 seconds · Ready to send"
+                  : "मुफ्त · 30 सेकंड में · भेजने के लिए तैयार"}
+              </p>
+            </div>
+            <span className="text-accent shrink-0 ml-4">→</span>
+          </div>
         </button>
       ) : (
         <div className="border border-border rounded-xl p-5 bg-surface-2 space-y-4">

@@ -23,7 +23,7 @@ const CONFIG = {
   },
   low: {
     label: { en: "Low coverage", hi: "कम कवरेज" },
-    bg: "bg-bg",
+    bg: "bg-surface-2",
     border: "border-border",
     text: "text-ink-3",
     dot: "bg-border-2",
