@@ -2,6 +2,8 @@
 
 **Legal rights advisor for India.** Describe your situation in plain language — Haqq searches 1,420+ sections across 8 Indian acts, finds what applies, and tells you exactly what to do. With citations, step-by-step remedies, and a downloadable legal notice. Free. No signup.
 
+![Throttle](assets/Haqq-dark.png)
+
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=3776AB)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=009688)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-4169E1?style=flat&logo=postgresql&logoColor=4169E1)
@@ -55,10 +57,10 @@ Source: [indiacode.nic.in](https://indiacode.nic.in) — Government of India
 |---|---|
 | Backend | FastAPI, Python 3.11 |
 | Database | PostgreSQL + pgvector |
-| Embeddings | fastembed · `intfloat/multilingual-e5-large` (local, ~1.1 GB) |
+| Embeddings | FastEmbed · `intfloat/multilingual-e5-large` (local, ~1.1 GB) |
 | LLM | OpenRouter |
 | Queue | Redis + RQ |
-| PDF | reportlab |
+| PDF | ReportLab |
 | Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
 
 ## Local Development
@@ -84,7 +86,7 @@ pip install -r requirements.txt
 cd frontend && npm install && cd ..
 ```
 
-**Corpus** — add source PDFs to `corpus/sources/raw/` and run:
+**Corpus** — Add source PDFs to `corpus/sources/raw/` and run:
 
 ```bash
 python -m corpus.ingest   # chunk and store
