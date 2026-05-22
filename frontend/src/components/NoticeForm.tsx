@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import type { Language } from "../App";
 import { createDraft, getPdfDownloadUrl } from "../api";
 
 interface NoticeFormProps {
   situationId: string;
-  language: Language;
 }
 
 interface FormData {
@@ -31,7 +29,7 @@ const inputClass =
   "w-full border border-border rounded-lg px-3 py-2 text-sm text-ink bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all";
 const labelClass = "block text-xs font-medium text-ink-3 mb-1";
 
-export default function NoticeForm({ situationId, language }: NoticeFormProps) {
+export default function NoticeForm({ situationId }: NoticeFormProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormData>({
     senderName: "",
@@ -45,9 +43,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
     periodFrom: "",
     periodTo: "",
   });
-  const [status, setStatus] = useState<
-    "idle" | "generating" | "done" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "generating" | "done" | "error">("idle");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -63,17 +59,8 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleGenerate = async () => {
-    if (
-      !form.senderName ||
-      !form.senderAddress ||
-      !form.recipientName ||
-      !form.recipientAddress
-    ) {
-      setErrorMsg(
-        language === "en"
-          ? "Please fill in all required fields."
-          : "कृपया सभी आवश्यक फील्ड भरें।",
-      );
+    if (!form.senderName || !form.senderAddress || !form.recipientName || !form.recipientAddress) {
+      setErrorMsg("Please fill in all required fields.");
       return;
     }
     setStatus("generating");
@@ -126,38 +113,26 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
           else {
             if (!mountedRef.current) return;
             setStatus("error");
-            setErrorMsg(
-              language === "en"
-                ? "PDF generation timed out."
-                : "PDF तैयार होने में समय लग रहा है।",
-            );
+            setErrorMsg("PDF generation timed out.");
           }
         } catch {
           if (!mountedRef.current) return;
           setStatus("error");
-          setErrorMsg(
-            language === "en" ? "Something went wrong." : "कुछ गलत हो गया।",
-          );
+          setErrorMsg("Something went wrong.");
         }
       };
 
       setTimeout(poll, 2000);
     } catch {
       setStatus("error");
-      setErrorMsg(
-        language === "en"
-          ? "Failed to create notice."
-          : "नोटिस बनाने में विफल।",
-      );
+      setErrorMsg("Failed to create notice.");
     }
   };
 
   return (
     <section className="mb-8">
       <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-        {language === "en"
-          ? "Draft Your Legal Notice"
-          : "कानूनी नोटिस तैयार करें"}
+        Draft Your Legal Notice
       </h2>
 
       {!open ? (
@@ -168,14 +143,10 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-ink group-hover:text-accent transition-colors">
-                {language === "en"
-                  ? "Generate Legal Notice PDF"
-                  : "कानूनी नोटिस PDF बनाएं"}
+                Generate Legal Notice PDF
               </p>
               <p className="text-xs text-ink-3 mt-0.5">
-                {language === "en"
-                  ? "Free · Takes 30 seconds · Ready to send"
-                  : "मुफ्त · 30 सेकंड में · भेजने के लिए तैयार"}
+                Free · Takes 30 seconds · Ready to send
               </p>
             </div>
             <span className="text-accent shrink-0 ml-4">→</span>
@@ -184,9 +155,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
       ) : (
         <div className="border border-border rounded-xl p-5 bg-surface-2 space-y-4">
           <div>
-            <label className={labelClass}>
-              {language === "en" ? "Notice Type" : "नोटिस प्रकार"}
-            </label>
+            <label className={labelClass}>Notice Type</label>
             <select
               value={form.noticeType}
               onChange={(e) => update("noticeType", e.target.value)}
@@ -202,9 +171,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>
-                {language === "en" ? "Your Name *" : "आपका नाम *"}
-              </label>
+              <label className={labelClass}>Your Name *</label>
               <input
                 type="text"
                 value={form.senderName}
@@ -213,9 +180,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               />
             </div>
             <div>
-              <label className={labelClass}>
-                {language === "en" ? "Your Address *" : "आपका पता *"}
-              </label>
+              <label className={labelClass}>Your Address *</label>
               <input
                 type="text"
                 value={form.senderAddress}
@@ -224,9 +189,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               />
             </div>
             <div>
-              <label className={labelClass}>
-                {language === "en" ? "Your Phone" : "फोन नंबर"}
-              </label>
+              <label className={labelClass}>Your Phone</label>
               <input
                 type="text"
                 value={form.senderPhone}
@@ -235,9 +198,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               />
             </div>
             <div>
-              <label className={labelClass}>
-                {language === "en" ? "Your Email" : "ईमेल"}
-              </label>
+              <label className={labelClass}>Your Email</label>
               <input
                 type="email"
                 value={form.senderEmail}
@@ -249,11 +210,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>
-                {language === "en"
-                  ? "Recipient Name *"
-                  : "प्राप्तकर्ता का नाम *"}
-              </label>
+              <label className={labelClass}>Recipient Name *</label>
               <input
                 type="text"
                 value={form.recipientName}
@@ -262,11 +219,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               />
             </div>
             <div>
-              <label className={labelClass}>
-                {language === "en"
-                  ? "Recipient Address *"
-                  : "प्राप्तकर्ता का पता *"}
-              </label>
+              <label className={labelClass}>Recipient Address *</label>
               <input
                 type="text"
                 value={form.recipientAddress}
@@ -279,9 +232,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
           {form.noticeType === "demand_notice" && (
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className={labelClass}>
-                  {language === "en" ? "Amount Due (Rs.)" : "बकाया राशि"}
-                </label>
+                <label className={labelClass}>Amount Due (Rs.)</label>
                 <input
                   type="text"
                   value={form.amountDue}
@@ -291,9 +242,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>
-                  {language === "en" ? "Period From" : "अवधि से"}
-                </label>
+                <label className={labelClass}>Period From</label>
                 <input
                   type="text"
                   value={form.periodFrom}
@@ -303,9 +252,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
                 />
               </div>
               <div>
-                <label className={labelClass}>
-                  {language === "en" ? "Period To" : "अवधि तक"}
-                </label>
+                <label className={labelClass}>Period To</label>
                 <input
                   type="text"
                   value={form.periodTo}
@@ -325,7 +272,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               download
               className="inline-block bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-accent-dark transition-colors"
             >
-              {language === "en" ? "Download PDF" : "PDF डाउनलोड करें"}
+              Download PDF
             </a>
           ) : (
             <button
@@ -333,13 +280,7 @@ export default function NoticeForm({ situationId, language }: NoticeFormProps) {
               disabled={status === "generating"}
               className="bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {status === "generating"
-                ? language === "en"
-                  ? "Generating PDF..."
-                  : "PDF बन रहा है..."
-                : language === "en"
-                  ? "Generate Notice PDF"
-                  : "नोटिस PDF बनाएं"}
+              {status === "generating" ? "Generating PDF..." : "Generate Notice PDF"}
             </button>
           )}
         </div>

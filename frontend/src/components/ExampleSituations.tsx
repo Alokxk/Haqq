@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
-import type { Language } from "../App";
 import type { Example } from "../types";
 import { getExamples } from "../api";
 
 interface ExampleSituationsProps {
-  language: Language;
   onSelect: (text: string) => void;
 }
 
-export default function ExampleSituations({
-  language,
-  onSelect,
-}: ExampleSituationsProps) {
+export default function ExampleSituations({ onSelect }: ExampleSituationsProps) {
   const [examples, setExamples] = useState<Example[]>([]);
 
   useEffect(() => {
@@ -25,7 +20,7 @@ export default function ExampleSituations({
   return (
     <div className="mt-3">
       <p className="text-xs font-medium text-ink-3/60 uppercase tracking-wider mb-2">
-        {language === "en" ? "Try an example" : "उदाहरण आज़माएं"}
+        Try an example
       </p>
       <div className="flex flex-wrap gap-2">
         {examples.map((example) => (

@@ -1,20 +1,14 @@
-import type { Language } from "../App";
-
 interface SituationInputProps {
-  language: Language;
   onSubmit: (text: string) => void;
   loading: boolean;
   value: string;
   onChange: (text: string) => void;
 }
 
-const PLACEHOLDER = {
-  en: "e.g. My landlord hasn't returned my security deposit after 3 months. He's not responding to calls...",
-  hi: "जैसे: मकान मालिक ने 3 महीने बाद भी सिक्योरिटी डिपॉजिट वापस नहीं किया...",
-};
+const PLACEHOLDER =
+  "e.g. My landlord hasn't returned my security deposit after 3 months. He's not responding to calls...";
 
 export default function SituationInput({
-  language,
   onSubmit,
   loading,
   value,
@@ -35,7 +29,7 @@ export default function SituationInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={PLACEHOLDER[language]}
+        placeholder={PLACEHOLDER}
         rows={4}
         disabled={loading}
         className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 resize-none transition-all"
@@ -51,12 +45,10 @@ export default function SituationInput({
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeOpacity="0.25" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>
-            {language === "en" ? "Analysing..." : "विश्लेषण हो रहा है..."}
+            Analysing...
           </>
-        ) : language === "en" ? (
-          "Know My Rights →"
         ) : (
-          "मेरे अधिकार जानें →"
+          "Know My Rights →"
         )}
       </button>
     </div>

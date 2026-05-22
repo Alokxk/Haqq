@@ -1,15 +1,10 @@
 import { useState } from "react";
-import type { Language } from "../App";
 
 interface EvidenceChecklistProps {
   items: string[];
-  language: Language;
 }
 
-export default function EvidenceChecklist({
-  items,
-  language,
-}: EvidenceChecklistProps) {
+export default function EvidenceChecklist({ items }: EvidenceChecklistProps) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
 
   if (!items || items.length === 0) return null;
@@ -25,7 +20,7 @@ export default function EvidenceChecklist({
   return (
     <section className="mb-8">
       <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-        {language === "en" ? "Evidence to Preserve" : "सबूत सुरक्षित रखें"}
+        Evidence to Preserve
       </h2>
       <div className="border border-border rounded-xl p-4 bg-surface-2 space-y-2.5">
         {items.map((item, i) => {
@@ -44,12 +39,7 @@ export default function EvidenceChecklist({
                 }`}
               >
                 {done && (
-                  <svg
-                    width="9"
-                    height="7"
-                    viewBox="0 0 9 7"
-                    fill="none"
-                  >
+                  <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
                     <path
                       d="M1 3.5L3.5 6L8 1"
                       stroke="white"

@@ -1,12 +1,10 @@
 import { useState } from "react";
-import type { Language } from "../App";
 
 interface ShareButtonProps {
   url: string;
-  language: Language;
 }
 
-export default function ShareButton({ url, language }: ShareButtonProps) {
+export default function ShareButton({ url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -24,13 +22,7 @@ export default function ShareButton({ url, language }: ShareButtonProps) {
       onClick={handleCopy}
       className="text-sm border border-border rounded-lg px-3 py-1.5 text-ink-3 hover:border-accent/40 hover:text-accent transition-colors bg-surface-2"
     >
-      {copied
-        ? language === "en"
-          ? "✓ Copied"
-          : "✓ कॉपी हुआ"
-        : language === "en"
-          ? "Share →"
-          : "शेयर करें →"}
+      {copied ? "✓ Copied" : "Share →"}
     </button>
   );
 }

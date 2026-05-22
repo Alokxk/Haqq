@@ -1,4 +1,4 @@
-export default function Footer({ language }: { language: "en" | "hi" }) {
+export default function Footer() {
   return (
     <footer className="border-t border-border bg-surface-2 w-full">
       <div className="max-w-4xl mx-auto px-6 py-6">
@@ -18,21 +18,15 @@ export default function Footer({ language }: { language: "en" | "hi" }) {
             <span className="text-sm font-semibold text-ink">Haqq</span>
             <span className="text-border-2 hidden sm:block">·</span>
             <span className="text-xs text-ink-3 hidden sm:block">
-              {language === "en"
-                ? "The law is public. A lawyer isn't free. Haqq is."
-                : "कानून सार्वजनिक है। वकील मुफ्त नहीं। Haqq है।"}
+              The law is public. A lawyer isn't free. Haqq is.
             </span>
           </div>
           <div className="flex flex-col items-start sm:items-end gap-1">
             <p className="text-xs text-ink-3">
-              {language === "en"
-                ? "Law text from indiacode.nic.in — Government of India"
-                : "कानूनी पाठ indiacode.nic.in से — भारत सरकार"}
+              Law text from indiacode.nic.in — Government of India
             </p>
             <p className="text-xs text-ink-3/50">
-              {language === "en"
-                ? "Not legal advice. Consult a registered advocate for court matters."
-                : "यह कानूनी सलाह नहीं है।"}
+              Not legal advice. Consult a registered advocate for court matters.
             </p>
           </div>
         </div>
