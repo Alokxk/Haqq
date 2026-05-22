@@ -1,5 +1,4 @@
 import json
-import os
 import re
 from openai import OpenAI
 from pydantic import BaseModel
@@ -75,7 +74,17 @@ def classify(text: str) -> ClassificationResult:
 
     if data.get("domain") not in DOMAINS:
         data["domain"] = "other"
+    if not data.get("sub_domain"):
+        data["sub_domain"] = "unknown"
     if data.get("confidence") not in ("high", "medium", "low"):
         data["confidence"] = "low"
 
-    return ClassificationResult(**data)
+    try:
+        return ClassificationResult(**data)
+    except Exception:
+        return ClassificationResult(
+            domain=data.get("domain", "other"),
+            sub_domain="unknown",
+            state=None,
+            confidence="low",
+        )

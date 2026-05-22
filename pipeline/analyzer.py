@@ -104,7 +104,6 @@ def analyze(
     situation: str,
     chunks: list[dict],
     domain: str | None = None,
-    language: str = "en",
 ) -> AnalysisResult:
     cheque_constraint = CHEQUE_BOUNCE_CONSTRAINT if domain == "cheque_bounce" else ""
     context = build_context(chunks)

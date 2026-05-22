@@ -13,9 +13,26 @@ interface FormData {
   recipientName: string;
   recipientAddress: string;
   noticeType: string;
+  // demand_notice
   amountDue: string;
   periodFrom: string;
   periodTo: string;
+  // rti_application
+  informationSought: string;
+  // consumer_complaint
+  productDescription: string;
+  purchaseDate: string;
+  defectDescription: string;
+  remedySought: string;
+  // cheque_bounce_notice
+  chequeNumber: string;
+  chequeDate: string;
+  chequeAmount: string;
+  bankName: string;
+  dishonourDate: string;
+  dishonourReason: string;
+  memoReceivedDate: string;
+  noticeDeadline: string;
 }
 
 const NOTICE_TYPES = [
@@ -29,20 +46,35 @@ const inputClass =
   "w-full border border-border rounded-lg px-3 py-2 text-sm text-ink bg-surface-2 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 transition-all";
 const labelClass = "block text-xs font-medium text-ink-3 mb-1";
 
+const EMPTY_FORM: FormData = {
+  senderName: "",
+  senderAddress: "",
+  senderPhone: "",
+  senderEmail: "",
+  recipientName: "",
+  recipientAddress: "",
+  noticeType: "demand_notice",
+  amountDue: "",
+  periodFrom: "",
+  periodTo: "",
+  informationSought: "",
+  productDescription: "",
+  purchaseDate: "",
+  defectDescription: "",
+  remedySought: "",
+  chequeNumber: "",
+  chequeDate: "",
+  chequeAmount: "",
+  bankName: "",
+  dishonourDate: "",
+  dishonourReason: "",
+  memoReceivedDate: "",
+  noticeDeadline: "",
+};
+
 export default function NoticeForm({ situationId }: NoticeFormProps) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<FormData>({
-    senderName: "",
-    senderAddress: "",
-    senderPhone: "",
-    senderEmail: "",
-    recipientName: "",
-    recipientAddress: "",
-    noticeType: "demand_notice",
-    amountDue: "",
-    periodFrom: "",
-    periodTo: "",
-  });
+  const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [status, setStatus] = useState<"idle" | "generating" | "done" | "error">("idle");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -72,6 +104,22 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
         extra.amount_due = form.amountDue;
         extra.period_from = form.periodFrom;
         extra.period_to = form.periodTo;
+      } else if (form.noticeType === "rti_application") {
+        extra.information_sought = form.informationSought;
+      } else if (form.noticeType === "consumer_complaint") {
+        extra.product_description = form.productDescription;
+        extra.purchase_date = form.purchaseDate;
+        extra.defect_description = form.defectDescription;
+        extra.remedy_sought = form.remedySought;
+      } else if (form.noticeType === "cheque_bounce_notice") {
+        extra.cheque_number = form.chequeNumber;
+        extra.cheque_date = form.chequeDate;
+        extra.cheque_amount = form.chequeAmount;
+        extra.bank_name = form.bankName;
+        extra.dishonour_date = form.dishonourDate;
+        extra.dishonour_reason = form.dishonourReason || "Funds Insufficient";
+        extra.memo_received_date = form.memoReceivedDate;
+        extra.notice_deadline = form.noticeDeadline;
       }
 
       const draft = await createDraft({
@@ -229,6 +277,7 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
             </div>
           </div>
 
+          {/* Demand notice fields */}
           {form.noticeType === "demand_notice" && (
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -260,6 +309,160 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
                   className={inputClass}
                   placeholder="e.g. March 2026"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* RTI fields */}
+          {form.noticeType === "rti_application" && (
+            <div>
+              <label className={labelClass}>Information Sought *</label>
+              <textarea
+                value={form.informationSought}
+                onChange={(e) => update("informationSought", e.target.value)}
+                rows={3}
+                className={inputClass}
+                placeholder="Describe the information you are requesting from the public authority..."
+              />
+            </div>
+          )}
+
+          {/* Consumer complaint fields */}
+          {form.noticeType === "consumer_complaint" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Product / Service *</label>
+                  <input
+                    type="text"
+                    value={form.productDescription}
+                    onChange={(e) => update("productDescription", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Samsung TV 55 inch"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Purchase Date *</label>
+                  <input
+                    type="text"
+                    value={form.purchaseDate}
+                    onChange={(e) => update("purchaseDate", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 15 January 2026"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Defect / Issue *</label>
+                <textarea
+                  value={form.defectDescription}
+                  onChange={(e) => update("defectDescription", e.target.value)}
+                  rows={2}
+                  className={inputClass}
+                  placeholder="Describe the defect or deficiency..."
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Remedy Sought *</label>
+                <input
+                  type="text"
+                  value={form.remedySought}
+                  onChange={(e) => update("remedySought", e.target.value)}
+                  className={inputClass}
+                  placeholder="e.g. replace the product or refund Rs. 45,000"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Cheque bounce fields */}
+          {form.noticeType === "cheque_bounce_notice" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Cheque Number *</label>
+                  <input
+                    type="text"
+                    value={form.chequeNumber}
+                    onChange={(e) => update("chequeNumber", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 001234"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cheque Date *</label>
+                  <input
+                    type="text"
+                    value={form.chequeDate}
+                    onChange={(e) => update("chequeDate", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 01 March 2026"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Cheque Amount (Rs.) *</label>
+                  <input
+                    type="text"
+                    value={form.chequeAmount}
+                    onChange={(e) => update("chequeAmount", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 2,00,000"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Bank Name *</label>
+                  <input
+                    type="text"
+                    value={form.bankName}
+                    onChange={(e) => update("bankName", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. HDFC Bank"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Dishonour Reason</label>
+                  <input
+                    type="text"
+                    value={form.dishonourReason}
+                    onChange={(e) => update("dishonourReason", e.target.value)}
+                    className={inputClass}
+                    placeholder="Funds Insufficient"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Date of Dishonour *</label>
+                  <input
+                    type="text"
+                    value={form.dishonourDate}
+                    onChange={(e) => update("dishonourDate", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 10 April 2026"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Memo Received Date *</label>
+                  <input
+                    type="text"
+                    value={form.memoReceivedDate}
+                    onChange={(e) => update("memoReceivedDate", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 12 April 2026"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Notice Deadline *</label>
+                  <input
+                    type="text"
+                    value={form.noticeDeadline}
+                    onChange={(e) => update("noticeDeadline", e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. 12 May 2026"
+                  />
+                </div>
               </div>
             </div>
           )}

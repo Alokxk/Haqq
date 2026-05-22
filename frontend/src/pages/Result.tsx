@@ -23,9 +23,11 @@ const DOMAIN_LABELS: Record<string, string> = {
   other: "General Legal",
 };
 
-const formatDomain = (domain: string) =>
-  DOMAIN_LABELS[domain.toLowerCase()] ??
-  domain.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const formatDomain = (domain: string | undefined) =>
+  domain
+    ? (DOMAIN_LABELS[domain.toLowerCase()] ??
+       domain.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+    : "General Legal";
 
 const ThumbUp = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

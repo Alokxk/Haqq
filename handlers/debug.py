@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from config.settings import settings
-from pipeline.retriever import retrieve, get_query_embedding, hybrid_search
+from pipeline.retriever import get_query_embedding, hybrid_search
 
 router = APIRouter()
 

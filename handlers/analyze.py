@@ -32,20 +32,18 @@ DISCLAIMER = (
 
 class AnalyzeRequest(BaseModel):
     text: str
-    language: str = "en"
     state: str | None = None
 
 
-def _cache_key(text: str, language: str, state: str | None) -> str:
+def _cache_key(text: str, state: str | None) -> str:
     normalized = " ".join(text.lower().split())
-    raw = f"{language}:{state or ''}:{normalized}"
+    raw = f"{state or ''}:{normalized}"
     return "haqq:analyze:" + hashlib.sha256(raw.encode()).hexdigest()
 
 
 def _save_situation(
     session_id: str,
     raw_input: str,
-    language: str,
     domain: str | None,
     sub_domain: str | None,
     state: str | None,
@@ -73,7 +71,7 @@ def _save_situation(
                 situation_id,
                 session_id,
                 raw_input,
-                language,
+                "en",
                 domain,
                 sub_domain,
                 state,
@@ -132,7 +130,7 @@ def _fetch_situation(situation_id: str) -> tuple | None:
     try:
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT analysis, confidence, top_score, fallback "
+            "SELECT analysis, confidence, top_score, fallback, domain, sub_domain, state "
             "FROM situations WHERE id = %s",
             (situation_id,),
         )
@@ -148,7 +146,7 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     session_id = str(uuid.uuid4())
     request_id = str(uuid.uuid4())[:8]
 
-    cache_key = _cache_key(body.text, body.language, body.state)
+    cache_key = _cache_key(body.text, body.state)
     cached = redis_conn.get(cache_key)
     if cached:
         response = json.loads(cached)
@@ -186,7 +184,6 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
             _save_situation,
             session_id,
             body.text,
-            body.language,
             classification.domain,
             classification.sub_domain,
             body.state,
@@ -221,14 +218,22 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
             situation=body.text,
             chunks=chunks,
             domain=classification.domain,
-            language=body.language,
         )
-    except ValueError:
+    except ValueError as e:
+        logger.warning(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "error": "analyzer_json_error",
+                    "detail": str(e),
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                }
+            )
+        )
         situation_id = await asyncio.to_thread(
             _save_situation,
             session_id,
             body.text,
-            body.language,
             classification.domain,
             classification.sub_domain,
             body.state,
@@ -255,7 +260,6 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         _save_situation,
         session_id,
         body.text,
-        body.language,
         classification.domain,
         classification.sub_domain,
         body.state,
@@ -317,12 +321,18 @@ async def get_shared_situation(situation_id: str):
     if not row:
         raise HTTPException(status_code=404, detail="Situation not found")
 
-    analysis, confidence, top_score, fallback = row
+    analysis, confidence, top_score, fallback, domain, sub_domain, state = row
     return {
         "situation_id": situation_id,
+        "share_url": f"{settings.public_url}/s/{situation_id}",
+        "domain": domain or "other",
+        "sub_domain": sub_domain or "unknown",
+        "state": state,
         "confidence": confidence,
         "top_score": float(top_score) if top_score else 0.0,
         "fallback": fallback,
+        "similar_situations": [],
+        "cached": False,
         **(analysis if analysis else {}),
         "disclaimer": DISCLAIMER,
     }

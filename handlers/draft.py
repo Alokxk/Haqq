@@ -44,8 +44,8 @@ def generate_pdf_job(
     notice_id: str, notice_type: str, sender: dict, recipient: dict, extra: dict
 ):
     conn = psycopg2.connect(settings.sync_database_url)
+    cursor = conn.cursor()
     try:
-        cursor = conn.cursor()
         cursor.execute("SELECT content FROM notices WHERE id = %s", (notice_id,))
         row = cursor.fetchone()
         if not row:
@@ -58,6 +58,7 @@ def generate_pdf_job(
         pdf_bytes = generator(
             sender=sender,
             recipient=recipient,
+            notice_id=notice_id,
             **extra,
         )
 
@@ -71,6 +72,15 @@ def generate_pdf_job(
             WHERE id = %s
             """,
             (pdf_path, notice_id),
+        )
+        cursor.execute(
+            """
+            INSERT INTO pdf_jobs (notice_id, status, completed_at)
+            VALUES (%s, 'done', NOW())
+            ON CONFLICT (notice_id) DO UPDATE
+            SET status = 'done', completed_at = NOW()
+            """,
+            (notice_id,),
         )
         conn.commit()
 
@@ -240,9 +250,6 @@ async def download_draft(notice_id: str):
         )
 
     if status.get("job_status") == "failed":
-        raise HTTPException(
-            status_code=500,
-            detail={"status": "failed", "error": status["job_error"]},
-        )
+        return {"status": "failed", "error": status["job_error"]}
 
     return {"status": "processing"}

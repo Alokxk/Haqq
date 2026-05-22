@@ -1,5 +1,4 @@
 import io
-import pathlib
 import uuid
 from datetime import date
 
@@ -16,9 +15,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
-OUTPUT_DIR = pathlib.Path("generated_notices")
-OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Colours
 BLACK = colors.HexColor("#111827")
@@ -518,28 +514,19 @@ def generate_cheque_bounce_notice(
     )
 
     # Warning box
-    warn_style = ParagraphStyle(
-        "WarnStyle",
+    warn_title_white = ParagraphStyle(
+        "WTW",
         fontSize=9.5,
         fontName="Helvetica-Bold",
-        textColor=BLACK,
+        textColor=WHITE,
         alignment=TA_CENTER,
         leading=15,
-    )
-    warn_label = ParagraphStyle(
-        "WarnLabel",
-        fontSize=9,
-        fontName="Helvetica-Bold",
-        textColor=BLACK,
-        alignment=TA_CENTER,
-        leading=13,
-        spaceAfter=3,
     )
     warn_data = [
         [
             Paragraph(
                 "⚠  TIME-CRITICAL — STRICT DEADLINES UNDER SECTION 138 NI ACT",
-                warn_style,
+                warn_title_white,
             )
         ],
         [
@@ -558,37 +545,6 @@ def generate_cheque_bounce_notice(
             )
         ],
     ]
-    warn_t = Table(warn_data, colWidths=[170 * mm])
-    warn_t.setStyle(
-        TableStyle(
-            [
-                ("BOX", (0, 0), (-1, -1), 2, BLACK),
-                ("LINEBELOW", (0, 0), (-1, 0), 0.5, BORDER_GRAY),
-                ("BACKGROUND", (0, 0), (-1, 0), BLACK),
-                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.HexColor("#fef9c3")),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("TOPPADDING", (0, 0), (-1, -1), 7),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-            ]
-        )
-    )
-
-    # White title for warning header row
-    warn_title_white = ParagraphStyle(
-        "WTW",
-        fontSize=9.5,
-        fontName="Helvetica-Bold",
-        textColor=WHITE,
-        alignment=TA_CENTER,
-        leading=15,
-    )
-    warn_data[0][0] = Paragraph(
-        "⚠  TIME-CRITICAL — STRICT DEADLINES UNDER SECTION 138 NI ACT",
-        warn_title_white,
-    )
     warn_t = Table(warn_data, colWidths=[170 * mm])
     warn_t.setStyle(
         TableStyle(
