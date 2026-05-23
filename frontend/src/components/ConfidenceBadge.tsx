@@ -27,7 +27,10 @@ const CONFIG = {
   },
 };
 
-export default function ConfidenceBadge({ confidence, reason }: ConfidenceBadgeProps) {
+export default function ConfidenceBadge({
+  confidence,
+  reason,
+}: ConfidenceBadgeProps) {
   const c = CONFIG[confidence];
   return (
     <div className={`${c.bg} ${c.border} border rounded-xl p-4 mb-6`}>

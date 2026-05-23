@@ -26,18 +26,36 @@ const DOMAIN_LABELS: Record<string, string> = {
 const formatDomain = (domain: string | undefined) =>
   domain
     ? (DOMAIN_LABELS[domain.toLowerCase()] ??
-       domain.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
+      domain.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
     : "General Legal";
 
 const ThumbUp = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M7 10v12" />
     <path d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
   </svg>
 );
 
 const ThumbDown = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M17 14V2" />
     <path d="M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
   </svg>
@@ -65,7 +83,9 @@ export default function Result() {
   useEffect(() => {
     if (result) {
       document.title = `${formatDomain(result.domain)} Rights — Haqq`;
-      return () => { document.title = "Haqq — Know Your Legal Rights"; };
+      return () => {
+        document.title = "Haqq — Know Your Legal Rights";
+      };
     }
   }, [result]);
 
@@ -160,15 +180,16 @@ export default function Result() {
 
         {/* Rights */}
         {result.rights && result.rights.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-up [animation-delay:0ms]">
             <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
               Your Rights
             </h2>
             <div className="border border-border rounded-xl p-4 bg-surface-2 space-y-3">
               {result.rights.map((right, i) => (
-                <p key={i} className="text-sm text-ink-2 leading-relaxed">
-                  {right}
-                </p>
+                <div key={i} className="flex items-start gap-2.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
+                  <p className="text-sm text-ink-2 leading-relaxed">{right}</p>
+                </div>
               ))}
             </div>
           </section>
@@ -176,7 +197,7 @@ export default function Result() {
 
         {/* Remedies */}
         {result.remedies && result.remedies.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-up [animation-delay:80ms]">
             <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
               What You Can Do
             </h2>
@@ -190,9 +211,15 @@ export default function Result() {
                     {remedy.step}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-ink mb-1">{remedy.action}</p>
-                    <p className="text-sm text-ink-3 leading-relaxed mb-2">{remedy.details}</p>
-                    <span className="text-xs text-accent font-medium">{remedy.timeline}</span>
+                    <p className="text-sm font-semibold text-ink mb-1">
+                      {remedy.action}
+                    </p>
+                    <p className="text-sm text-ink-3 leading-relaxed mb-2">
+                      {remedy.details}
+                    </p>
+                    <span className="text-xs text-accent font-medium">
+                      {remedy.timeline}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -202,7 +229,7 @@ export default function Result() {
 
         {/* Laws */}
         {result.laws && result.laws.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-up [animation-delay:160ms]">
             <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
               The Law Says
             </h2>
@@ -218,7 +245,7 @@ export default function Result() {
 
         {/* Similar situations */}
         {result.similar_situations && result.similar_situations.length > 0 && (
-          <section className="mb-8">
+          <section className="mb-8 animate-fade-up [animation-delay:240ms]">
             <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
               Similar Situations
             </h2>
@@ -235,7 +262,9 @@ export default function Result() {
                     <p className="text-sm text-ink-2 group-hover:text-ink transition-colors">
                       {s.summary}
                     </p>
-                    <p className="text-xs text-ink-3 mt-0.5 capitalize">{s.domain}</p>
+                    <p className="text-xs text-ink-3 mt-0.5 capitalize">
+                      {s.domain}
+                    </p>
                   </div>
                   <span className="text-accent text-sm shrink-0 ml-4">↗</span>
                 </a>
@@ -245,10 +274,14 @@ export default function Result() {
         )}
 
         {/* Feedback */}
-        <section className="mb-8 border-t border-border pt-6">
-          <p className="text-sm font-medium text-ink-2 mb-3">Was this helpful?</p>
+        <section className="mb-8 border-t border-border pt-6 animate-fade-up [animation-delay:320ms]">
+          <p className="text-sm font-medium text-ink-2 mb-3">
+            Was this helpful?
+          </p>
           {feedbackGiven ? (
-            <p className="text-sm text-accent font-medium">Thanks for your feedback.</p>
+            <p className="text-sm text-accent font-medium">
+              Thanks for your feedback.
+            </p>
           ) : (
             <div className="flex gap-3">
               <button
@@ -269,7 +302,9 @@ export default function Result() {
           )}
         </section>
 
-        <p className="text-xs text-ink-3 border-t border-border pt-4">{result.disclaimer}</p>
+        <p className="text-xs text-ink-3 border-t border-border pt-4">
+          {result.disclaimer}
+        </p>
       </main>
       <Footer />
     </>

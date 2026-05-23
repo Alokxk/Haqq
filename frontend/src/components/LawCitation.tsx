@@ -14,7 +14,8 @@ export default function LawCitation({ law }: LawCitationProps) {
       <p className="text-sm text-ink-2 mt-2 leading-relaxed">{law.summary}</p>
       {law.possibly_amended && (
         <p className="text-xs text-amber-600 mt-2">
-          ⚠ Last verified: {law.last_updated}. Verify current text at indiacode.nic.in
+          ⚠ Last verified: {law.last_updated}. Verify current text at
+          indiacode.nic.in
         </p>
       )}
       {law.indiacode_url && (

@@ -387,19 +387,19 @@ def print_results(results: dict, label: str):
         print(f"{label}: no cases evaluated")
         return
 
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"{label}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
     print(f"Total cases evaluated: {total}")
     print(f"Skipped (no embedding): {results['skipped']}")
     print(
-        f"Top-1 accuracy: {results['top1_hits']}/{total} = {results['top1_hits']/total*100:.1f}%"
+        f"Top-1 accuracy: {results['top1_hits']}/{total} = {results['top1_hits'] / total * 100:.1f}%"
     )
     print(
-        f"Top-3 accuracy: {results['top3_hits']}/{total} = {results['top3_hits']/total*100:.1f}%"
+        f"Top-3 accuracy: {results['top3_hits']}/{total} = {results['top3_hits'] / total * 100:.1f}%"
     )
     print(
-        f"Top-5 accuracy: {results['top5_hits']}/{total} = {results['top5_hits']/total*100:.1f}%"
+        f"Top-5 accuracy: {results['top5_hits']}/{total} = {results['top5_hits'] / total * 100:.1f}%"
     )
     print(f"\nPer domain (Top-3):")
     for domain, stats in results["per_domain"].items():

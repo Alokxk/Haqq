@@ -6,7 +6,9 @@ interface ExampleSituationsProps {
   onSelect: (text: string) => void;
 }
 
-export default function ExampleSituations({ onSelect }: ExampleSituationsProps) {
+export default function ExampleSituations({
+  onSelect,
+}: ExampleSituationsProps) {
   const [examples, setExamples] = useState<Example[]>([]);
 
   useEffect(() => {

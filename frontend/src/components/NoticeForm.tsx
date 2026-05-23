@@ -75,7 +75,9 @@ const EMPTY_FORM: FormData = {
 export default function NoticeForm({ situationId }: NoticeFormProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
-  const [status, setStatus] = useState<"idle" | "generating" | "done" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "generating" | "done" | "error"
+  >("idle");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -91,7 +93,12 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleGenerate = async () => {
-    if (!form.senderName || !form.senderAddress || !form.recipientName || !form.recipientAddress) {
+    if (
+      !form.senderName ||
+      !form.senderAddress ||
+      !form.recipientName ||
+      !form.recipientAddress
+    ) {
       setErrorMsg("Please fill in all required fields.");
       return;
     }
@@ -336,7 +343,9 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
                   <input
                     type="text"
                     value={form.productDescription}
-                    onChange={(e) => update("productDescription", e.target.value)}
+                    onChange={(e) =>
+                      update("productDescription", e.target.value)
+                    }
                     className={inputClass}
                     placeholder="e.g. Samsung TV 55 inch"
                   />
@@ -483,7 +492,9 @@ export default function NoticeForm({ situationId }: NoticeFormProps) {
               disabled={status === "generating"}
               className="bg-accent text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {status === "generating" ? "Generating PDF..." : "Generate Notice PDF"}
+              {status === "generating"
+                ? "Generating PDF..."
+                : "Generate Notice PDF"}
             </button>
           )}
         </div>
