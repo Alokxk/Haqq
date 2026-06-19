@@ -1,11 +1,12 @@
 import re
+import os
 import pathlib
 import psycopg2
 from datetime import date
+from dotenv import load_dotenv
 
-from config.settings import settings
-
-DATABASE_URL = settings.database_url
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 ACT_METADATA = {
     "rti_2005": {

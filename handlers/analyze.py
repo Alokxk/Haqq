@@ -7,6 +7,7 @@ import uuid
 
 import psycopg2
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pgvector.psycopg2 import register_vector
 from pydantic import BaseModel
 from slowapi import Limiter
@@ -14,7 +15,7 @@ from slowapi.util import get_remote_address
 
 from config.settings import settings
 from db.cache import cache_get, cache_set
-from pipeline.analyzer import analyze, fallback_response
+from pipeline.analyzer import analyze, stream_analyze, fallback_response, _parse_raw
 from pipeline.classifier import classify
 from pipeline.retriever import retrieve
 
@@ -111,11 +112,15 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     cache_key = _cache_key(body.text, body.state)
     cached = cache_get(cache_key)
     if cached:
-        logger.info(json.dumps({
-            "request_id": request_id,
-            "cached": True,
-            "duration_ms": int((time.time() - start_time) * 1000),
-        }))
+        logger.info(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "cached": True,
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                }
+            )
+        )
         return {**cached, "cached": True}
 
     classification = await asyncio.to_thread(classify, body.text)
@@ -138,15 +143,28 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     if is_fallback:
         situation_id = await asyncio.to_thread(
             _save_situation,
-            session_id, body.text, classification.domain, classification.sub_domain,
-            body.state, {}, [], "low", top_score, True, query_vector,
+            session_id,
+            body.text,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            {},
+            [],
+            "low",
+            top_score,
+            True,
+            query_vector,
         )
-        logger.info(json.dumps({
-            "request_id": request_id,
-            "fallback": True,
-            "top_score": top_score,
-            "duration_ms": int((time.time() - start_time) * 1000),
-        }))
+        logger.info(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "fallback": True,
+                    "top_score": top_score,
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                }
+            )
+        )
         return {
             **fallback_response(),
             "situation_id": situation_id,
@@ -163,16 +181,29 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
             domain=classification.domain,
         )
     except ValueError as e:
-        logger.warning(json.dumps({
-            "request_id": request_id,
-            "error": "analyzer_json_error",
-            "detail": str(e),
-            "duration_ms": int((time.time() - start_time) * 1000),
-        }))
+        logger.warning(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "error": "analyzer_json_error",
+                    "detail": str(e),
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                }
+            )
+        )
         situation_id = await asyncio.to_thread(
             _save_situation,
-            session_id, body.text, classification.domain, classification.sub_domain,
-            body.state, {}, [], "low", top_score, True, query_vector,
+            session_id,
+            body.text,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            {},
+            [],
+            "low",
+            top_score,
+            True,
+            query_vector,
         )
         return {
             **fallback_response(),
@@ -188,9 +219,17 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
 
     situation_id = await asyncio.to_thread(
         _save_situation,
-        session_id, body.text, classification.domain, classification.sub_domain,
-        body.state, analysis_result.model_dump(), laws_cited,
-        confidence, top_score, False, query_vector,
+        session_id,
+        body.text,
+        classification.domain,
+        classification.sub_domain,
+        body.state,
+        analysis_result.model_dump(),
+        laws_cited,
+        confidence,
+        top_score,
+        False,
+        query_vector,
     )
 
     response = {
@@ -213,18 +252,184 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
 
     cache_set(cache_key, response)
 
-    logger.info(json.dumps({
-        "request_id": request_id,
-        "domain": classification.domain,
-        "state": body.state,
-        "confidence": confidence,
-        "top_score": top_score,
-        "fallback": False,
-        "laws_cited": laws_cited,
-        "duration_ms": int((time.time() - start_time) * 1000),
-    }))
+    logger.info(
+        json.dumps(
+            {
+                "request_id": request_id,
+                "domain": classification.domain,
+                "state": body.state,
+                "confidence": confidence,
+                "top_score": top_score,
+                "fallback": False,
+                "laws_cited": laws_cited,
+                "duration_ms": int((time.time() - start_time) * 1000),
+            }
+        )
+    )
 
     return response
+
+
+@router.post("/analyze/stream")
+@limiter.limit("10/hour")
+async def analyze_situation_stream(request: Request, body: AnalyzeRequest):
+    """
+    SSE streaming endpoint. Yields:
+      - data: {"type":"token","content":"..."} for each LLM token
+      - data: {"type":"done","result":{...}}   once the full response is ready
+      - data: {"type":"error","message":"..."}  on failure
+    """
+    start_time = time.time()
+    session_id = str(uuid.uuid4())
+    request_id = str(uuid.uuid4())[:8]
+
+    cache_key = _cache_key(body.text, body.state)
+    cached = cache_get(cache_key)
+    if cached:
+        result = {**cached, "cached": True}
+
+        async def cached_stream():
+            yield f"data: {json.dumps({'type': 'done', 'result': result})}\n\n"
+
+        return StreamingResponse(cached_stream(), media_type="text/event-stream")
+
+    classification = await asyncio.to_thread(classify, body.text)
+    retrieval = await asyncio.to_thread(
+        retrieve,
+        query_text=body.text,
+        domain=classification.domain if classification.confidence != "low" else None,
+        state=body.state
+        or (classification.state if classification.confidence != "low" else None),
+        classification_confidence=classification.confidence,
+    )
+
+    chunks = retrieval["chunks"]
+    confidence = retrieval["confidence"]
+    top_score = retrieval["top_score"]
+    is_fallback = retrieval["fallback"]
+    query_vector = retrieval["query_vector"]
+
+    if is_fallback:
+        situation_id = await asyncio.to_thread(
+            _save_situation,
+            session_id,
+            body.text,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            {},
+            [],
+            "low",
+            top_score,
+            True,
+            query_vector,
+        )
+        result = {
+            **fallback_response(),
+            "situation_id": situation_id,
+            "cached": False,
+            "share_url": f"{settings.public_url}/s/{situation_id}",
+            "disclaimer": DISCLAIMER,
+        }
+
+        async def fallback_stream():
+            yield f"data: {json.dumps({'type': 'done', 'result': result})}\n\n"
+
+        return StreamingResponse(fallback_stream(), media_type="text/event-stream")
+
+    async def token_stream():
+        accumulated = []
+        loop = asyncio.get_event_loop()
+        queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        def run_stream():
+            try:
+                for token in stream_analyze(body.text, chunks, classification.domain):
+                    loop.call_soon_threadsafe(queue.put_nowait, token)
+            except Exception as e:
+                loop.call_soon_threadsafe(queue.put_nowait, f"__ERROR__:{e}")
+            finally:
+                loop.call_soon_threadsafe(queue.put_nowait, None)
+
+        thread = asyncio.to_thread(run_stream)
+        asyncio.ensure_future(thread)
+
+        error_occurred = False
+        while True:
+            token = await queue.get()
+            if token is None:
+                break
+            if isinstance(token, str) and token.startswith("__ERROR__:"):
+                logger.warning(json.dumps({"request_id": request_id, "error": token}))
+                yield f"data: {json.dumps({'type': 'error', 'message': 'Analysis failed'})}\n\n"
+                error_occurred = True
+                break
+            accumulated.append(token)
+            yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+
+        if error_occurred:
+            return
+
+        raw = "".join(accumulated)
+        try:
+            analysis_result = _parse_raw(raw, chunks)
+        except ValueError:
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Analysis failed'})}\n\n"
+            return
+
+        laws_cited = [
+            f"{law['act_short']}_{law['section']}" for law in analysis_result.laws
+        ]
+        situation_id = await asyncio.to_thread(
+            _save_situation,
+            session_id,
+            body.text,
+            classification.domain,
+            classification.sub_domain,
+            body.state,
+            analysis_result.model_dump(),
+            laws_cited,
+            confidence,
+            top_score,
+            False,
+            query_vector,
+        )
+
+        response = {
+            "situation_id": situation_id,
+            "share_url": f"{settings.public_url}/s/{situation_id}",
+            "domain": classification.domain,
+            "sub_domain": classification.sub_domain,
+            "state": body.state or classification.state,
+            "confidence": confidence,
+            "top_score": round(top_score, 4),
+            "confidence_reason": analysis_result.confidence_reason,
+            "fallback": False,
+            "cached": False,
+            "rights": analysis_result.rights,
+            "remedies": analysis_result.remedies,
+            "laws": analysis_result.laws,
+            "evidence_checklist": analysis_result.evidence_checklist,
+            "disclaimer": DISCLAIMER,
+        }
+
+        cache_set(cache_key, response)
+
+        logger.info(
+            json.dumps(
+                {
+                    "request_id": request_id,
+                    "domain": classification.domain,
+                    "confidence": confidence,
+                    "top_score": top_score,
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                }
+            )
+        )
+
+        yield f"data: {json.dumps({'type': 'done', 'result': response})}\n\n"
+
+    return StreamingResponse(token_stream(), media_type="text/event-stream")
 
 
 @router.get("/s/{situation_id}")

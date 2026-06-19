@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     )
 
     openrouter_api_key: str
-    openrouter_model: str = "openai/gpt-oss-20b:free"
+    openrouter_model: str = "deepseek/deepseek-chat"
     database_url: str = "postgresql://postgres:postgres@localhost/haqq"
     port: int = 8000
     environment: str = "development"

@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import type { AnalyzeResponse } from "../types";
-import ConfidenceBadge from "../components/ConfidenceBadge";
-import LawCitation from "../components/LawCitation";
+import { ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import type { AnalyzeResponse, Law } from "../types";
 import FallbackResult from "../components/FallbackResult";
 import Footer from "../components/Footer";
-import EvidenceChecklist from "../components/EvidenceChecklist";
 import ShareButton from "../components/ShareButton";
 import { getSituation, submitFeedback } from "../api";
 
@@ -16,9 +14,12 @@ const DOMAIN_LABELS: Record<string, string> = {
   rti: "Right to Information",
   criminal: "Criminal Law",
   rent: "Rent & Housing",
+  property: "Rent & Housing",
   posh: "Workplace Harassment",
   cheque: "Cheque Bounce",
+  cheque_bounce: "Cheque Bounce",
   negotiable: "Cheque Bounce",
+  police_complaint: "Police & FIR",
   other: "General Legal",
 };
 
@@ -28,37 +29,16 @@ const formatDomain = (domain: string | undefined) =>
       domain.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()))
     : "General Legal";
 
-const ThumbUp = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M7 10v12" />
-    <path d="M15 5.88L14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
-  </svg>
-);
-
-const ThumbDown = () => (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M17 14V2" />
-    <path d="M9 18.12L10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
-  </svg>
-);
+function groupLawsByAct(laws: Law[]): Record<string, Law[]> {
+  return laws.reduce(
+    (acc, law) => {
+      if (!acc[law.act]) acc[law.act] = [];
+      acc[law.act].push(law);
+      return acc;
+    },
+    {} as Record<string, Law[]>,
+  );
+}
 
 export default function Result() {
   const location = useLocation();
@@ -69,6 +49,7 @@ export default function Result() {
   );
   const [loading, setLoading] = useState(!location.state?.result && !!id);
   const [feedbackGiven, setFeedbackGiven] = useState<1 | -1 | null>(null);
+  const [checked, setChecked] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!location.state?.result && id) {
@@ -88,56 +69,55 @@ export default function Result() {
     }
   }, [result]);
 
+  useEffect(() => {
+    if (!loading && !result) navigate("/");
+  }, [loading, result, navigate]);
+
   const handleFeedback = async (rating: 1 | -1) => {
     if (!result) return;
     try {
       await submitFeedback(result.situation_id, rating);
       setFeedbackGiven(rating);
-    } catch (error) {
-      console.error("Failed to submit feedback:", error);
+    } catch (e) {
+      console.error(e);
     }
   };
 
+  const toggleCheck = (i: number) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+
   if (loading) {
     return (
-      <main className="max-w-3xl mx-auto px-6 py-8">
-        <div className="animate-pulse">
-          <div className="flex justify-between mb-6">
-            <div className="h-4 w-16 bg-border rounded" />
-            <div className="h-7 w-20 bg-border rounded-lg" />
-          </div>
-          <div className="h-16 bg-border/50 rounded-xl mb-8" />
-          <div className="h-3 w-24 bg-border rounded mb-3" />
-          <div className="h-28 bg-border/50 rounded-xl mb-8" />
-          <div className="h-3 w-28 bg-border rounded mb-3" />
-          <div className="space-y-3 mb-8">
-            <div className="h-24 bg-border/50 rounded-xl" />
-            <div className="h-24 bg-border/50 rounded-xl" />
-          </div>
-          <div className="h-3 w-24 bg-border rounded mb-3" />
-          <div className="h-20 bg-border/50 rounded-xl" />
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 w-16 bg-gray-200 rounded" />
+          <div className="h-6 w-40 bg-gray-200 rounded" />
+          <div className="h-28 bg-gray-100 rounded-2xl" />
+          <div className="h-36 bg-gray-100 rounded-2xl" />
         </div>
       </main>
     );
   }
 
-  if (!result) {
-    navigate("/");
-    return null;
-  }
+  if (!result) return null;
 
   if (result.fallback) {
     return (
       <>
-        <main className="max-w-3xl mx-auto px-6 py-8">
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
           <button
             onClick={() => navigate("/")}
-            className="text-sm text-ink-3 hover:text-ink mb-6 flex items-center gap-1 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-800 mb-6 flex items-center gap-1 transition-colors"
           >
             ← Back
           </button>
           <FallbackResult message={result.fallback_message || ""} />
-          <p className="mt-8 text-xs text-ink-3 border-t border-border pt-4">
+          <p className="mt-8 text-xs text-gray-500 border-t border-gray-200 pt-4">
             {result.disclaimer}
           </p>
         </main>
@@ -146,132 +126,205 @@ export default function Result() {
     );
   }
 
+  const groupedLaws = groupLawsByAct(result.laws ?? []);
+
   return (
     <>
-      <main className="max-w-3xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate("/")}
-            className="text-sm text-ink-3 hover:text-ink flex items-center gap-1 transition-colors"
+            className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors"
           >
             ← Back
           </button>
           <ShareButton url={result.share_url} />
         </div>
 
-        {/* Classification */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xs font-medium text-accent bg-accent-light border border-accent/20 px-2.5 py-1 rounded-full">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full mb-3">
             {formatDomain(result.domain)}
           </span>
-          {result.sub_domain && result.sub_domain !== "unknown" && (
-            <span className="text-xs text-ink-3 capitalize">
-              {result.sub_domain.replace(/_/g, " ")}
-            </span>
-          )}
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            Your rights & remedies
+          </h1>
         </div>
 
-        <ConfidenceBadge
-          confidence={result.confidence}
-          reason={result.confidence_reason}
-        />
-
-        {/* Rights */}
-        {result.rights && result.rights.length > 0 && (
-          <section className="mb-8 animate-fade-up [animation-delay:0ms]">
-            <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-              Your Rights
-            </h2>
-            <div className="border border-border rounded-xl p-4 bg-surface-2 space-y-3">
-              {result.rights.map((right, i) => (
-                <div key={i} className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent mt-2 shrink-0" />
-                  <p className="text-sm text-ink-2 leading-relaxed">{right}</p>
+        {/* Two column on desktop, stacked on mobile */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
+          {/* Main — 3/5 */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Rights */}
+            {result.rights && result.rights.length > 0 && (
+              <section>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                  Your Rights
+                </h2>
+                <div className="space-y-2">
+                  {result.rights.map((right, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 shrink-0" />
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        {right}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              </section>
+            )}
 
-        {/* Remedies */}
-        {result.remedies && result.remedies.length > 0 && (
-          <section className="mb-8 animate-fade-up [animation-delay:80ms]">
-            <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-              What You Can Do
-            </h2>
-            <div className="space-y-3">
-              {result.remedies.map((remedy) => (
-                <div
-                  key={remedy.step}
-                  className="border border-border rounded-xl p-4 bg-surface-2 hover:border-accent/30 transition-colors flex gap-3"
-                >
-                  <span className="w-6 h-6 rounded-full bg-accent/10 text-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                    {remedy.step}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-ink mb-1">
-                      {remedy.action}
-                    </p>
-                    <p className="text-sm text-ink-3 leading-relaxed mb-2">
-                      {remedy.details}
-                    </p>
-                    <span className="text-xs text-accent font-medium">
-                      {remedy.timeline}
-                    </span>
+            {/* Remedies */}
+            {result.remedies && result.remedies.length > 0 && (
+              <section>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                  What You Can Do
+                </h2>
+                <div className="space-y-2">
+                  {result.remedies.map((remedy) => (
+                    <div
+                      key={remedy.step}
+                      className="bg-white border border-gray-200 rounded-xl p-4 flex gap-3 sm:gap-4"
+                    >
+                      <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                        {remedy.step}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 mb-1">
+                          {remedy.action}
+                        </p>
+                        <p className="text-sm text-gray-600 leading-relaxed">
+                          {remedy.details}
+                        </p>
+                        {remedy.timeline && (
+                          <p className="text-xs text-blue-600 font-medium mt-2">
+                            {remedy.timeline}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* Sidebar — 2/5 */}
+          <div className="lg:col-span-2 space-y-5">
+            {/* Laws */}
+            {Object.keys(groupedLaws).length > 0 && (
+              <section>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                  The Law Says
+                </h2>
+                <div className="space-y-2">
+                  {Object.entries(groupedLaws).map(([act, laws]) => (
+                    <div
+                      key={act}
+                      className="bg-white border border-gray-200 rounded-xl p-4"
+                    >
+                      <p className="text-xs font-semibold text-gray-800 mb-2.5">
+                        {act}
+                      </p>
+                      <div className="space-y-2">
+                        {laws.map((law, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start justify-between gap-2"
+                          >
+                            <p className="text-xs text-gray-600 leading-snug">
+                              <span className="font-semibold text-gray-800">
+                                § {law.section}
+                              </span>
+                              {law.title ? ` — ${law.title}` : ""}
+                            </p>
+                            {law.indiacode_url && (
+                              <a
+                                href={law.indiacode_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-500 hover:text-blue-700 shrink-0 transition-colors"
+                              >
+                                ↗
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Evidence */}
+            {result.evidence_checklist &&
+              result.evidence_checklist.length > 0 && (
+                <section>
+                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                    Evidence to Preserve
+                  </h2>
+                  <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                    {result.evidence_checklist.map((item, i) => {
+                      const done = checked.has(i);
+                      return (
+                        <div
+                          key={i}
+                          onClick={() => toggleCheck(i)}
+                          className="flex items-start gap-2.5 cursor-pointer group"
+                        >
+                          <span
+                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${done ? "bg-blue-600 border-blue-600" : "border-gray-300 group-hover:border-blue-400"}`}
+                          >
+                            {done && (
+                              <Check size={9} stroke="white" strokeWidth={3} />
+                            )}
+                          </span>
+                          <span
+                            className={`text-xs leading-relaxed transition-colors ${done ? "text-gray-400 line-through" : "text-gray-600"}`}
+                          >
+                            {item}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+                </section>
+              )}
+          </div>
+        </div>
 
-        {/* Laws */}
-        {result.laws && result.laws.length > 0 && (
-          <section className="mb-8 animate-fade-up [animation-delay:160ms]">
-            <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-              The Law Says
-            </h2>
-            {result.laws.map((law, i) => (
-              <LawCitation key={i} law={law} />
-            ))}
-          </section>
-        )}
-
-        <EvidenceChecklist items={result.evidence_checklist} />
-
-        {/* Feedback */}
-        <section className="mb-8 border-t border-border pt-6 animate-fade-up [animation-delay:320ms]">
-          <p className="text-sm font-medium text-ink-2 mb-3">
-            Was this helpful?
-          </p>
+        {/* Bottom row — disclaimer + feedback */}
+        <div className="mt-8 pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p className="text-xs text-gray-500 max-w-md">{result.disclaimer}</p>
           {feedbackGiven ? (
-            <p className="text-sm text-accent font-medium">
-              Thanks for your feedback.
+            <p className="text-sm text-blue-600 font-medium shrink-0">
+              Thanks for the feedback!
             </p>
           ) : (
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleFeedback(1)}
-                className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 text-sm text-ink-3 hover:border-green-400 hover:text-green-600 transition-all bg-surface-2"
-              >
-                <ThumbUp />
-                Helpful
-              </button>
-              <button
-                onClick={() => handleFeedback(-1)}
-                className="flex items-center gap-2 border border-border rounded-lg px-4 py-2 text-sm text-ink-3 hover:border-red-400 hover:text-red-500 transition-all bg-surface-2"
-              >
-                <ThumbDown />
-                Not helpful
-              </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <p className="text-xs text-gray-500">Was this helpful?</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleFeedback(1)}
+                  className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition-all bg-white"
+                >
+                  <ThumbsUp size={12} /> Yes
+                </button>
+                <button
+                  onClick={() => handleFeedback(-1)}
+                  className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition-all bg-white"
+                >
+                  <ThumbsDown size={12} /> No
+                </button>
+              </div>
             </div>
           )}
-        </section>
-
-        <p className="text-xs text-ink-3 border-t border-border pt-4">
-          {result.disclaimer}
-        </p>
+        </div>
       </main>
       <Footer />
     </>

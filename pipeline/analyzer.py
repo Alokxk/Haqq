@@ -41,10 +41,9 @@ ANALYZER_PROMPT = """You are a legal rights assistant for India. Analyze the sit
 below using ONLY the retrieved law sections provided. Do not cite any law not present
 in the context below.
 
-Use hedged language throughout: say "Based on the retrieved sections, you may consider..."
-rather than definitive statements like "You can do X."
-If a right or remedy is not explicitly supported by the retrieved text below,
-do not include it.
+Write in plain, direct language. State rights and remedies clearly — do not pad every
+sentence with "Based on the retrieved sections, you may consider...". Only omit a right
+or remedy if it is genuinely not supported by the retrieved text.
 
 {cheque_bounce_constraint}
 
@@ -56,7 +55,7 @@ RETRIEVED LAW SECTIONS:
 
 Respond with ONLY valid JSON in exactly this structure. No markdown. No explanation.
 {{
-  "rights": ["Based on the retrieved sections, you may..."],
+  "rights": ["You have the right to..."],
   "remedies": [
     {{
       "step": 1,
@@ -100,27 +99,17 @@ def build_context(chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def analyze(
-    situation: str,
-    chunks: list[dict],
-    domain: str | None = None,
-) -> AnalysisResult:
+def _build_prompt(situation: str, chunks: list[dict], domain: str | None) -> str:
     cheque_constraint = CHEQUE_BOUNCE_CONSTRAINT if domain == "cheque_bounce" else ""
     context = build_context(chunks)
-
-    prompt = ANALYZER_PROMPT.format(
+    return ANALYZER_PROMPT.format(
         situation=situation,
         context=context,
         cheque_bounce_constraint=cheque_constraint,
     )
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-    )
 
-    raw = response.choices[0].message.content.strip()
+def _parse_raw(raw: str, chunks: list[dict]) -> AnalysisResult:
     raw = re.sub(r"^```json\s*", "", raw)
     raw = re.sub(r"^```\s*", "", raw)
     raw = re.sub(r"\s*```$", "", raw)
@@ -138,7 +127,6 @@ def analyze(
     data.setdefault("confidence_reason", "Analysis based on retrieved law sections.")
 
     chunk_map = {f"{c['act_short']}_{c['section_number']}": c for c in chunks}
-
     act_url_map = {
         c["act_short"]: c.get("indiacode_url") for c in chunks if c.get("indiacode_url")
     }
@@ -156,6 +144,40 @@ def analyze(
             law["indiacode_url"] = act_url_map[law["act_short"]]
 
     return AnalysisResult(**data)
+
+
+def analyze(
+    situation: str,
+    chunks: list[dict],
+    domain: str | None = None,
+) -> AnalysisResult:
+    prompt = _build_prompt(situation, chunks, domain)
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+    )
+    raw = response.choices[0].message.content.strip()
+    return _parse_raw(raw, chunks)
+
+
+def stream_analyze(
+    situation: str,
+    chunks: list[dict],
+    domain: str | None = None,
+):
+    """Yields raw token strings from the LLM as they arrive."""
+    prompt = _build_prompt(situation, chunks, domain)
+    stream = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        stream=True,
+    )
+    for chunk in stream:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
 
 
 def fallback_response() -> dict:

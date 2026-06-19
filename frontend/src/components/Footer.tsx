@@ -1,34 +1,31 @@
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-surface-2 w-full">
-      <div className="max-w-4xl mx-auto px-6 py-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-accent rounded-md flex items-center justify-center shrink-0">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M3 2V14M13 2V14M3 8H13"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="text-sm font-semibold text-ink">Haqq</span>
-            <span className="text-border-2 hidden sm:block">·</span>
-            <span className="text-xs text-ink-3 hidden sm:block">
-              The law is public. A lawyer isn't free. Haqq is.
-            </span>
-          </div>
-          <div className="flex flex-col items-start sm:items-end gap-1">
-            <p className="text-xs text-ink-3">
-              Law text from indiacode.nic.in — Government of India
-            </p>
-            <p className="text-xs text-ink-3/50">
-              Not legal advice. Consult a registered advocate for court matters.
-            </p>
-          </div>
+    <footer className="border-t border-gray-200 bg-white mt-16">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-2 shrink-0">
+          <img src="/logo.svg" alt="Haqq" className="w-5 h-5 shrink-0" />
+          <span className="text-sm font-semibold text-gray-800">Haqq</span>
+          <span className="text-gray-300 hidden sm:block">·</span>
+          <span className="text-xs text-gray-500 hidden sm:block">
+            The law is public. A lawyer isn't free. Haqq is.
+          </span>
+        </div>
+        <div className="flex flex-col gap-0.5 sm:text-right">
+          <p className="text-xs text-gray-500">
+            Law text from{" "}
+            <a
+              href="https://indiacode.nic.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors underline underline-offset-2"
+            >
+              indiacode.nic.in
+            </a>{" "}
+            — Government of India
+          </p>
+          <p className="text-xs text-gray-400">
+            Not legal advice. Consult a registered advocate for court matters.
+          </p>
         </div>
       </div>
     </footer>

@@ -1,9 +1,10 @@
+import os
 import psycopg2
+from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 
-from config.settings import settings
-
-DATABASE_URL = settings.database_url
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 TEST_CASES = [
     {

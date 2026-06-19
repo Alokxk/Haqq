@@ -21,7 +21,7 @@ export default function ExampleSituations({
 
   return (
     <div className="mt-3">
-      <p className="text-xs font-medium text-ink-3/60 uppercase tracking-wider mb-2">
+      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
         Try an example
       </p>
       <div className="flex flex-wrap gap-2">
@@ -29,7 +29,7 @@ export default function ExampleSituations({
           <button
             key={example.id}
             onClick={() => onSelect(example.text)}
-            className="text-xs border border-border rounded-lg px-3 py-1.5 text-ink-3 bg-bg hover:border-accent/40 hover:text-accent transition-all"
+            className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white hover:border-blue-300 hover:text-blue-600 transition-all"
           >
             {example.label}
           </button>

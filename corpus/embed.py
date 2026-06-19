@@ -1,14 +1,16 @@
+import os
 import time
 import psycopg2
 import warnings
+from dotenv import load_dotenv
 from pgvector.psycopg2 import register_vector
 from fastembed import TextEmbedding
 
-from config.settings import settings
+load_dotenv()
 
 warnings.filterwarnings("ignore")
 
-DATABASE_URL = settings.database_url
+DATABASE_URL = os.environ["DATABASE_URL"]
 BATCH_SIZE = 10
 MODEL_NAME = "BAAI/bge-small-en-v1.5"
 

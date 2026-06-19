@@ -11,9 +11,9 @@ SEMANTIC_WEIGHT = 0.7
 KEYWORD_WEIGHT = 0.3
 TOP_K = 8
 
-CONFIDENCE_HIGH = 0.80
-CONFIDENCE_MEDIUM = 0.65
-CONFIDENCE_LOW = 0.50
+CONFIDENCE_HIGH = 0.60
+CONFIDENCE_MEDIUM = 0.45
+CONFIDENCE_FALLBACK = 0.30
 
 MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
@@ -146,7 +146,7 @@ def retrieve(
 
     confidence = compute_confidence(chunks)
     top_score = chunks[0]["combined_score"] if chunks else 0.0
-    fallback = top_score < CONFIDENCE_LOW
+    fallback = top_score < CONFIDENCE_FALLBACK
 
     return {
         "chunks": chunks,

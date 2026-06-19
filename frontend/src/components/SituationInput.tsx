@@ -1,3 +1,5 @@
+import { Loader2 } from "lucide-react";
+
 interface SituationInputProps {
   onSubmit: (text: string) => void;
   loading: boolean;
@@ -32,38 +34,16 @@ export default function SituationInput({
         placeholder={PLACEHOLDER}
         rows={4}
         disabled={loading}
-        className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-sm text-ink placeholder-ink-3/40 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/40 resize-none transition-all"
+        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 resize-none transition-all"
       />
       <button
         onClick={handleSubmit}
         disabled={loading || value.trim().length < 10}
-        className="mt-3 w-full bg-accent text-white font-semibold py-3 px-6 rounded-xl hover:bg-accent-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm tracking-wide flex items-center justify-center gap-2"
+        className="mt-3 w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
       >
         {loading ? (
           <>
-            <svg
-              className="animate-spin shrink-0"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeOpacity="0.25"
-              />
-              <path
-                d="M12 2a10 10 0 0 1 10 10"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-            </svg>
-            Analysing...
+            <Loader2 size={15} className="animate-spin" /> Analysing...
           </>
         ) : (
           "Know My Rights →"
