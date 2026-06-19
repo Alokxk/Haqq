@@ -6,6 +6,5 @@ __pycache__/
 .gitignore
 frontend/
 corpus/sources/raw/
-generated_notices/
 eval/
 README.md

@@ -13,7 +13,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from config.settings import settings
-from db.redis import redis_conn
+from db.cache import cache_get, cache_set
 from pipeline.analyzer import analyze, fallback_response
 from pipeline.classifier import classify
 from pipeline.retriever import retrieve
@@ -21,8 +21,6 @@ from pipeline.retriever import retrieve
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
-
-CACHE_TTL = 6 * 60 * 60
 
 DISCLAIMER = (
     "This is not legal advice. For court proceedings or complex matters, "
@@ -147,10 +145,9 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     request_id = str(uuid.uuid4())[:8]
 
     cache_key = _cache_key(body.text, body.state)
-    cached = redis_conn.get(cache_key)
+    cached = cache_get(cache_key)
     if cached:
-        response = json.loads(cached)
-        response["cached"] = True
+        response = {**cached, "cached": True}
         logger.info(
             json.dumps(
                 {
@@ -294,7 +291,7 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         "disclaimer": DISCLAIMER,
     }
 
-    redis_conn.setex(cache_key, CACHE_TTL, json.dumps(response))
+    cache_set(cache_key, response)
 
     logger.info(
         json.dumps(
