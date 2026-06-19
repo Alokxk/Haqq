@@ -15,17 +15,7 @@ CREATE TABLE situations (
     top_score       NUMERIC(5,4),
     fallback        BOOLEAN DEFAULT FALSE,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
-    query_embedding vector(1024)
-);
-
-CREATE TABLE notices (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    situation_id    UUID REFERENCES situations(id),
-    notice_type     VARCHAR(100),
-    content         TEXT NOT NULL,
-    pdf_path        TEXT,
-    pdf_ready       BOOLEAN DEFAULT FALSE,
-    created_at      TIMESTAMPTZ DEFAULT NOW()
+    query_embedding vector(384)
 );
 
 CREATE TABLE legal_corpus (
@@ -41,7 +31,7 @@ CREATE TABLE legal_corpus (
     indiacode_url    TEXT,
     last_updated     DATE,
     possibly_amended BOOLEAN DEFAULT FALSE,
-    embedding        vector(1024),
+    embedding        vector(384),
     tsv              TSVECTOR GENERATED ALWAYS AS (
                        to_tsvector('english',
                          coalesce(act_name, '') || ' ' ||
@@ -58,15 +48,6 @@ CREATE INDEX idx_corpus_embedding
 CREATE INDEX idx_corpus_tsv    ON legal_corpus USING GIN(tsv);
 CREATE INDEX idx_corpus_domain ON legal_corpus(domain);
 CREATE INDEX idx_corpus_state  ON legal_corpus(state);
-
-CREATE TABLE pdf_jobs (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    notice_id    UUID UNIQUE REFERENCES notices(id),
-    status       VARCHAR(20) DEFAULT 'queued',
-    error        TEXT,
-    created_at   TIMESTAMPTZ DEFAULT NOW(),
-    completed_at TIMESTAMPTZ
-);
 
 CREATE TABLE feedback (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
