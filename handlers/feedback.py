@@ -16,7 +16,7 @@ class FeedbackRequest(BaseModel):
 
 
 def _insert_feedback(situation_id: str, rating: int) -> str | None:
-    conn = psycopg2.connect(settings.sync_database_url)
+    conn = psycopg2.connect(settings.database_url)
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM situations WHERE id = %s", (situation_id,))
@@ -34,7 +34,7 @@ def _insert_feedback(situation_id: str, rating: int) -> str | None:
 
 
 def _fetch_stats() -> dict:
-    conn = psycopg2.connect(settings.sync_database_url)
+    conn = psycopg2.connect(settings.database_url)
     try:
         cursor = conn.cursor()
         cursor.execute("""

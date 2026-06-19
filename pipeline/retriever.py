@@ -15,7 +15,7 @@ CONFIDENCE_HIGH = 0.80
 CONFIDENCE_MEDIUM = 0.65
 CONFIDENCE_LOW = 0.50
 
-MODEL_NAME = "intfloat/multilingual-e5-large"
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 _embedder = None
 
@@ -29,8 +29,7 @@ def get_embedder() -> TextEmbedding:
 
 def get_query_embedding(text: str) -> list[float]:
     model = get_embedder()
-    query_text = f"query: {text}"
-    vectors = list(model.embed([query_text]))
+    vectors = list(model.query_embed([text]))
     return vectors[0].tolist()
 
 
@@ -41,7 +40,7 @@ def hybrid_search(
     state: str | None = None,
     top_k: int = TOP_K,
 ) -> list[dict]:
-    conn = psycopg2.connect(settings.sync_database_url)
+    conn = psycopg2.connect(settings.database_url)
     register_vector(conn)
     cursor = conn.cursor()
 

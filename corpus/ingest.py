@@ -5,7 +5,7 @@ from datetime import date
 
 from config.settings import settings
 
-DATABASE_URL = settings.sync_database_url
+DATABASE_URL = settings.database_url
 
 ACT_METADATA = {
     "rti_2005": {

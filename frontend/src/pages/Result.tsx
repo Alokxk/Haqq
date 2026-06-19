@@ -7,7 +7,6 @@ import FallbackResult from "../components/FallbackResult";
 import Footer from "../components/Footer";
 import EvidenceChecklist from "../components/EvidenceChecklist";
 import ShareButton from "../components/ShareButton";
-import NoticeForm from "../components/NoticeForm";
 import { getSituation, submitFeedback } from "../api";
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -240,38 +239,6 @@ export default function Result() {
         )}
 
         <EvidenceChecklist items={result.evidence_checklist} />
-
-        <NoticeForm situationId={result.situation_id} />
-
-        {/* Similar situations */}
-        {result.similar_situations && result.similar_situations.length > 0 && (
-          <section className="mb-8 animate-fade-up [animation-delay:240ms]">
-            <h2 className="text-xs font-semibold text-ink-3 uppercase tracking-widest mb-3 pl-3 border-l-2 border-accent/30">
-              Similar Situations
-            </h2>
-            <div className="space-y-2">
-              {result.similar_situations.map((s) => (
-                <a
-                  key={s.situation_id}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between border border-border rounded-xl p-4 bg-surface-2 hover:border-accent/30 transition-colors group"
-                >
-                  <div>
-                    <p className="text-sm text-ink-2 group-hover:text-ink transition-colors">
-                      {s.summary}
-                    </p>
-                    <p className="text-xs text-ink-3 mt-0.5 capitalize">
-                      {s.domain}
-                    </p>
-                  </div>
-                  <span className="text-accent text-sm shrink-0 ml-4">↗</span>
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Feedback */}
         <section className="mb-8 border-t border-border pt-6 animate-fade-up [animation-delay:320ms]">

@@ -8,9 +8,9 @@ from config.settings import settings
 
 warnings.filterwarnings("ignore")
 
-DATABASE_URL = settings.sync_database_url
+DATABASE_URL = settings.database_url
 BATCH_SIZE = 10
-MODEL_NAME = "intfloat/multilingual-e5-large"
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 
 def get_chunks_without_embeddings(cursor) -> list[tuple]:
@@ -21,7 +21,7 @@ def get_chunks_without_embeddings(cursor) -> list[tuple]:
 
 
 def main():
-    print(f"Loading {MODEL_NAME} (first run downloads ~2.2GB)...")
+    print(f"Loading {MODEL_NAME} (first run downloads ~130MB)...")
     model = TextEmbedding(MODEL_NAME)
     print("Model loaded.")
 
@@ -38,7 +38,7 @@ def main():
         for i in range(0, total, BATCH_SIZE):
             batch = chunks[i : i + BATCH_SIZE]
             ids = [row[0] for row in batch]
-            texts = [f"passage: {row[1]}" for row in batch]
+            texts = [row[1] for row in batch]
 
             vectors = list(model.embed(texts))
 

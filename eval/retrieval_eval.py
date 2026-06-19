@@ -3,7 +3,7 @@ from pgvector.psycopg2 import register_vector
 
 from config.settings import settings
 
-DATABASE_URL = settings.sync_database_url
+DATABASE_URL = settings.database_url
 
 TEST_CASES = [
     {
@@ -419,7 +419,7 @@ def main():
     cursor = conn.cursor()
 
     print("Loading embedding model...")
-    model = TextEmbedding("intfloat/multilingual-e5-large")
+    model = TextEmbedding("BAAI/bge-small-en-v1.5")
     print("Model loaded.")
 
     print("Embedding eval queries...")
@@ -427,8 +427,7 @@ def main():
     for i, case in enumerate(TEST_CASES):
         if not case["expected_sections"]:
             continue
-        query_text = f"query: {case['situation']}"
-        vectors = list(model.embed([query_text]))
+        vectors = list(model.query_embed([case["situation"]]))
         query_vectors[case["id"]] = vectors[0].tolist()
         if (i + 1) % 10 == 0:
             print(f"  Embedded {i + 1}/{len(TEST_CASES)} queries")

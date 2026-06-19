@@ -53,7 +53,7 @@ def _save_situation(
     query_embedding: list[float] | None = None,
 ) -> str:
     situation_id = str(uuid.uuid4())
-    conn = psycopg2.connect(settings.sync_database_url)
+    conn = psycopg2.connect(settings.database_url)
     try:
         cursor = conn.cursor()
         register_vector(conn)
@@ -87,44 +87,8 @@ def _save_situation(
     return situation_id
 
 
-def _find_similar_situations(
-    query_embedding: list[float],
-    exclude_id: str,
-    limit: int = 3,
-) -> list[dict]:
-    conn = psycopg2.connect(settings.sync_database_url)
-    register_vector(conn)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            """
-            SELECT id, raw_input, domain, confidence
-            FROM situations
-            WHERE query_embedding IS NOT NULL
-            AND id != %s
-            AND fallback = FALSE
-            ORDER BY query_embedding <=> %s::vector
-            LIMIT %s
-            """,
-            (exclude_id, query_embedding, limit),
-        )
-        rows = cursor.fetchall()
-        return [
-            {
-                "situation_id": str(row[0]),
-                "summary": row[1][:100] + "..." if len(row[1]) > 100 else row[1],
-                "domain": row[2],
-                "confidence": row[3],
-                "url": f"{settings.public_url}/s/{row[0]}",
-            }
-            for row in rows
-        ]
-    finally:
-        conn.close()
-
-
 def _fetch_situation(situation_id: str) -> tuple | None:
-    conn = psycopg2.connect(settings.sync_database_url)
+    conn = psycopg2.connect(settings.database_url)
     try:
         cursor = conn.cursor()
         cursor.execute(
@@ -147,17 +111,12 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     cache_key = _cache_key(body.text, body.state)
     cached = cache_get(cache_key)
     if cached:
-        response = {**cached, "cached": True}
-        logger.info(
-            json.dumps(
-                {
-                    "request_id": request_id,
-                    "cached": True,
-                    "duration_ms": int((time.time() - start_time) * 1000),
-                }
-            )
-        )
-        return response
+        logger.info(json.dumps({
+            "request_id": request_id,
+            "cached": True,
+            "duration_ms": int((time.time() - start_time) * 1000),
+        }))
+        return {**cached, "cached": True}
 
     classification = await asyncio.to_thread(classify, body.text)
 
@@ -179,35 +138,22 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
     if is_fallback:
         situation_id = await asyncio.to_thread(
             _save_situation,
-            session_id,
-            body.text,
-            classification.domain,
-            classification.sub_domain,
-            body.state,
-            {},
-            [],
-            "low",
-            top_score,
-            True,
-            query_vector,
+            session_id, body.text, classification.domain, classification.sub_domain,
+            body.state, {}, [], "low", top_score, True, query_vector,
         )
-        response = fallback_response()
-        response["situation_id"] = situation_id
-        response["cached"] = False
-        response["share_url"] = f"{settings.public_url}/s/{situation_id}"
-        response["disclaimer"] = DISCLAIMER
-        response["similar_situations"] = []
-        logger.info(
-            json.dumps(
-                {
-                    "request_id": request_id,
-                    "fallback": True,
-                    "top_score": top_score,
-                    "duration_ms": int((time.time() - start_time) * 1000),
-                }
-            )
-        )
-        return response
+        logger.info(json.dumps({
+            "request_id": request_id,
+            "fallback": True,
+            "top_score": top_score,
+            "duration_ms": int((time.time() - start_time) * 1000),
+        }))
+        return {
+            **fallback_response(),
+            "situation_id": situation_id,
+            "cached": False,
+            "share_url": f"{settings.public_url}/s/{situation_id}",
+            "disclaimer": DISCLAIMER,
+        }
 
     try:
         analysis_result = await asyncio.to_thread(
@@ -217,37 +163,24 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
             domain=classification.domain,
         )
     except ValueError as e:
-        logger.warning(
-            json.dumps(
-                {
-                    "request_id": request_id,
-                    "error": "analyzer_json_error",
-                    "detail": str(e),
-                    "duration_ms": int((time.time() - start_time) * 1000),
-                }
-            )
-        )
+        logger.warning(json.dumps({
+            "request_id": request_id,
+            "error": "analyzer_json_error",
+            "detail": str(e),
+            "duration_ms": int((time.time() - start_time) * 1000),
+        }))
         situation_id = await asyncio.to_thread(
             _save_situation,
-            session_id,
-            body.text,
-            classification.domain,
-            classification.sub_domain,
-            body.state,
-            {},
-            [],
-            "low",
-            top_score,
-            True,
-            query_vector,
+            session_id, body.text, classification.domain, classification.sub_domain,
+            body.state, {}, [], "low", top_score, True, query_vector,
         )
-        response = fallback_response()
-        response["situation_id"] = situation_id
-        response["cached"] = False
-        response["share_url"] = f"{settings.public_url}/s/{situation_id}"
-        response["disclaimer"] = DISCLAIMER
-        response["similar_situations"] = []
-        return response
+        return {
+            **fallback_response(),
+            "situation_id": situation_id,
+            "cached": False,
+            "share_url": f"{settings.public_url}/s/{situation_id}",
+            "disclaimer": DISCLAIMER,
+        }
 
     laws_cited = [
         f"{law['act_short']}_{law['section']}" for law in analysis_result.laws
@@ -255,21 +188,9 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
 
     situation_id = await asyncio.to_thread(
         _save_situation,
-        session_id,
-        body.text,
-        classification.domain,
-        classification.sub_domain,
-        body.state,
-        analysis_result.model_dump(),
-        laws_cited,
-        confidence,
-        top_score,
-        False,
-        query_vector,
-    )
-
-    similar = await asyncio.to_thread(
-        _find_similar_situations, query_vector, situation_id
+        session_id, body.text, classification.domain, classification.sub_domain,
+        body.state, analysis_result.model_dump(), laws_cited,
+        confidence, top_score, False, query_vector,
     )
 
     response = {
@@ -287,26 +208,21 @@ async def analyze_situation(request: Request, body: AnalyzeRequest):
         "remedies": analysis_result.remedies,
         "laws": analysis_result.laws,
         "evidence_checklist": analysis_result.evidence_checklist,
-        "similar_situations": similar,
         "disclaimer": DISCLAIMER,
     }
 
     cache_set(cache_key, response)
 
-    logger.info(
-        json.dumps(
-            {
-                "request_id": request_id,
-                "domain": classification.domain,
-                "state": body.state,
-                "confidence": confidence,
-                "top_score": top_score,
-                "fallback": False,
-                "laws_cited": laws_cited,
-                "duration_ms": int((time.time() - start_time) * 1000),
-            }
-        )
-    )
+    logger.info(json.dumps({
+        "request_id": request_id,
+        "domain": classification.domain,
+        "state": body.state,
+        "confidence": confidence,
+        "top_score": top_score,
+        "fallback": False,
+        "laws_cited": laws_cited,
+        "duration_ms": int((time.time() - start_time) * 1000),
+    }))
 
     return response
 
@@ -328,7 +244,6 @@ async def get_shared_situation(situation_id: str):
         "confidence": confidence,
         "top_score": float(top_score) if top_score else 0.0,
         "fallback": fallback,
-        "similar_situations": [],
         "cached": False,
         **(analysis if analysis else {}),
         "disclaimer": DISCLAIMER,
