@@ -2,7 +2,7 @@
   <img src="frontend/public/logo.svg" width="72" height="72" alt="Haqq" />
   <p>Free legal rights advisor for India.<br/>Describe your situation in plain language — get your rights, remedies, and citations in seconds.</p>
 
-  <a href="https://tryhaqq.vercel.app">🔗 tryhaqq.vercel.app</a>
+<a href="https://tryhaqq.vercel.app">tryhaqq.vercel.app</a>
 
 ![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat&logo=python&logoColor=3776AB)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=009688)
