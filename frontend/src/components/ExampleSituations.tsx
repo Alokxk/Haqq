@@ -29,7 +29,7 @@ export default function ExampleSituations({
           <button
             key={example.id}
             onClick={() => onSelect(example.text)}
-            className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white hover:border-blue-300 hover:text-blue-600 transition-all"
+            className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2.5 py-1 sm:px-3 sm:py-1.5 text-gray-600 bg-white hover:border-blue-300 hover:text-blue-600 transition-all"
           >
             {example.label}
           </button>

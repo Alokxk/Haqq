@@ -59,27 +59,27 @@ export default function Home() {
 
   return (
     <>
-      <main>
+      <main className="min-h-screen">
         {/* Hero */}
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-12 sm:pb-14">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-10 sm:pb-14">
             <div className="max-w-2xl">
-              <p className="text-xs font-semibold tracking-widest uppercase text-blue-600 mb-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-blue-600 mb-3 sm:mb-4">
                 Free · No signup · Instant
               </p>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight tracking-tight mb-4">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight tracking-tight mb-3 sm:mb-4">
                 Know your legal rights.
                 <br />
                 <span className="text-blue-600">In plain language.</span>
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-8 max-w-lg">
+              <p className="text-sm sm:text-base text-gray-600 leading-relaxed mb-6 sm:mb-8 max-w-lg">
                 Describe your situation and Haqq finds the exact Indian law that
                 applies — with citations, remedies, and a step-by-step action
                 plan.
               </p>
 
               {loading ? (
-                <div className="border border-gray-200 rounded-2xl p-5 bg-gray-50">
+                <div className="border border-gray-200 rounded-2xl p-4 sm:p-5 bg-gray-50">
                   <div className="flex items-center gap-2.5 mb-3">
                     <Loader2
                       size={14}
@@ -115,7 +115,7 @@ export default function Home() {
                   {error && (
                     <p className="mt-3 text-sm text-red-500">{error}</p>
                   )}
-                  <p className="mt-2 text-xs text-gray-400">
+                  <p className="mt-2 text-xs text-gray-400 hidden sm:block">
                     Ctrl+Enter to submit
                   </p>
                 </>
@@ -125,15 +125,15 @@ export default function Home() {
         </div>
 
         {/* Laws covered */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
+          <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-3 sm:mb-4">
             Laws covered
           </p>
           <div className="flex flex-wrap gap-2">
             {ACTS.map((act) => (
               <span
                 key={act}
-                className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 text-gray-600 bg-white hover:border-blue-300 hover:text-blue-600 transition-all cursor-default"
+                className="text-[11px] sm:text-xs border border-gray-200 rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-gray-600 bg-white hover:border-blue-300 hover:text-blue-600 transition-all cursor-default"
               >
                 {act}
               </span>
@@ -143,11 +143,11 @@ export default function Home() {
 
         {/* How it works */}
         <div className="border-t border-gray-200">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-6">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
+            <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-4 sm:mb-6">
               How it works
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-200 border border-gray-200 rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 border border-gray-200 rounded-2xl overflow-hidden">
               {[
                 {
                   n: "01",

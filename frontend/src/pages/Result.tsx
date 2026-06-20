@@ -93,7 +93,7 @@ export default function Result() {
 
   if (loading) {
     return (
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="animate-pulse space-y-4">
           <div className="h-4 w-16 bg-gray-200 rounded" />
           <div className="h-6 w-40 bg-gray-200 rounded" />
@@ -109,7 +109,7 @@ export default function Result() {
   if (result.fallback) {
     return (
       <>
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <button
             onClick={() => navigate("/")}
             className="text-sm text-gray-500 hover:text-gray-800 mb-6 flex items-center gap-1 transition-colors"
@@ -130,9 +130,9 @@ export default function Result() {
 
   return (
     <>
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-12">
         {/* Top bar */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5 sm:mb-6">
           <button
             onClick={() => navigate("/")}
             className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors"
@@ -143,32 +143,31 @@ export default function Result() {
         </div>
 
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full mb-3">
+        <div className="mb-5 sm:mb-8">
+          <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full mb-2 sm:mb-3">
             {formatDomain(result.domain)}
           </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
             Your rights & remedies
           </h1>
         </div>
 
-        {/* Two column on desktop, stacked on mobile */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
-          {/* Main — 3/5 */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Rights */}
+        {/* Main content */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 lg:gap-8">
+          {/* Left — Rights + Remedies */}
+          <div className="lg:col-span-3 space-y-5 sm:space-y-6">
             {result.rights && result.rights.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2.5 sm:mb-3">
                   Your Rights
                 </h2>
                 <div className="space-y-2">
                   {result.rights.map((right, i) => (
                     <div
                       key={i}
-                      className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4"
+                      className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-3.5 sm:p-4"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-2 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
                       <p className="text-sm text-gray-700 leading-relaxed">
                         {right}
                       </p>
@@ -178,17 +177,16 @@ export default function Result() {
               </section>
             )}
 
-            {/* Remedies */}
             {result.remedies && result.remedies.length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2.5 sm:mb-3">
                   What You Can Do
                 </h2>
                 <div className="space-y-2">
                   {result.remedies.map((remedy) => (
                     <div
                       key={remedy.step}
-                      className="bg-white border border-gray-200 rounded-xl p-4 flex gap-3 sm:gap-4"
+                      className="bg-white border border-gray-200 rounded-xl p-3.5 sm:p-4 flex gap-3"
                     >
                       <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
                         {remedy.step}
@@ -213,19 +211,18 @@ export default function Result() {
             )}
           </div>
 
-          {/* Sidebar — 2/5 */}
+          {/* Right — Laws + Evidence */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Laws */}
             {Object.keys(groupedLaws).length > 0 && (
               <section>
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2.5 sm:mb-3">
                   The Law Says
                 </h2>
                 <div className="space-y-2">
                   {Object.entries(groupedLaws).map(([act, laws]) => (
                     <div
                       key={act}
-                      className="bg-white border border-gray-200 rounded-xl p-4"
+                      className="bg-white border border-gray-200 rounded-xl p-3.5 sm:p-4"
                     >
                       <p className="text-xs font-semibold text-gray-800 mb-2.5">
                         {act}
@@ -261,14 +258,13 @@ export default function Result() {
               </section>
             )}
 
-            {/* Evidence */}
             {result.evidence_checklist &&
               result.evidence_checklist.length > 0 && (
                 <section>
-                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">
+                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2.5 sm:mb-3">
                     Evidence to Preserve
                   </h2>
-                  <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+                  <div className="bg-white border border-gray-200 rounded-xl p-3.5 sm:p-4 space-y-3">
                     {result.evidence_checklist.map((item, i) => {
                       const done = checked.has(i);
                       return (
@@ -298,32 +294,36 @@ export default function Result() {
           </div>
         </div>
 
-        {/* Bottom row — disclaimer + feedback */}
-        <div className="mt-8 pt-5 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-xs text-gray-500 max-w-md">{result.disclaimer}</p>
-          {feedbackGiven ? (
-            <p className="text-sm text-blue-600 font-medium shrink-0">
-              Thanks for the feedback!
+        {/* Bottom — feedback + disclaimer */}
+        <div className="mt-8 pt-5 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <p className="text-xs text-gray-500 max-w-md leading-relaxed">
+              {result.disclaimer}
             </p>
-          ) : (
-            <div className="flex items-center gap-3 shrink-0">
-              <p className="text-xs text-gray-500">Was this helpful?</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleFeedback(1)}
-                  className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition-all bg-white"
-                >
-                  <ThumbsUp size={12} /> Yes
-                </button>
-                <button
-                  onClick={() => handleFeedback(-1)}
-                  className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition-all bg-white"
-                >
-                  <ThumbsDown size={12} /> No
-                </button>
+            {feedbackGiven ? (
+              <p className="text-sm text-blue-600 font-medium shrink-0">
+                Thanks for the feedback!
+              </p>
+            ) : (
+              <div className="flex items-center gap-3 shrink-0">
+                <p className="text-xs text-gray-500">Was this helpful?</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleFeedback(1)}
+                    className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-green-400 hover:text-green-600 transition-all bg-white"
+                  >
+                    <ThumbsUp size={12} /> Yes
+                  </button>
+                  <button
+                    onClick={() => handleFeedback(-1)}
+                    className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 hover:border-red-300 hover:text-red-500 transition-all bg-white"
+                  >
+                    <ThumbsDown size={12} /> No
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
       <Footer />
